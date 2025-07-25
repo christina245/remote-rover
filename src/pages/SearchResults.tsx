@@ -55,6 +55,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [mapCenter, setMapCenter] = useState<{lat: number, lng: number} | null>(null);
   const [sortBy, setSortBy] = useState<'distance' | 'rating'>('distance');
+  const [radiusMiles, setRadiusMiles] = useState<number>(5);
   const [isLoading, setIsLoading] = useState(false);
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
 
@@ -175,7 +176,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       for (const type of placeTypes) {
         const request = {
           location: new google.maps.LatLng(searchCoords.lat, searchCoords.lng),
-          radius: 16093, // 10 miles in meters
+          radius: radiusMiles * 1609.34, // Convert miles to meters
           type: type === 'lodging' ? 'lodging' : type
         };
 
@@ -302,11 +303,22 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         `${Math.floor(todayHours.close.time / 100)}:${(todayHours.close.time % 100).toString().padStart(2, '0')}` : 
         'Unknown';
 
-      // Get best photo for workspace
+      // Get best photo for workspace - prioritize interior shots
       const photos = details.photos || [];
-      const coverPhoto = photos.length > 0 ? 
-        `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photos[0].photo_reference}&key=${apiKeys.places}` :
-        '/placeholder.svg';
+      let coverPhoto = `https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=200&fit=crop`; // Default: people with laptops
+      
+      if (photos.length > 0) {
+        // Try to find an interior photo by checking multiple photos
+        const photoRef = photos.length > 1 ? photos[1].photo_reference : photos[0].photo_reference;
+        coverPhoto = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoRef}&key=${apiKeys.places}`;
+      } else {
+        // Use different defaults based on place type
+        if (placeType === 'cafe') {
+          coverPhoto = `https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=400&h=200&fit=crop`; // Cafe interior
+        } else if (placeType === 'library') {
+          coverPhoto = `https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400&h=200&fit=crop`; // Library interior
+        }
+      }
 
       // Generate work-friendly summary from reviews
       const workFriendlySummary = generateWorkFriendlySummary(details.reviews || []);
@@ -430,12 +442,26 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       {/* Results List */}
       <div className="p-4">
         <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-foreground">
-            {isLoading ? 'Searching...' : `Found ${searchResults.length} work-friendly locations`}
-          </p>
+          <div className="flex items-center gap-2 text-sm text-foreground">
+            <span>
+              {isLoading ? 'Searching...' : `Found ${searchResults.length} work-friendly locations within`}
+            </span>
+            <Select value={radiusMiles.toString()} onValueChange={(value) => setRadiusMiles(parseInt(value))}>
+              <SelectTrigger className="w-20 h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="15">15</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="font-semibold">mi</span>
+          </div>
           <Select value={sortBy} onValueChange={(value: 'distance' | 'rating') => setSortBy(value)}>
-            <SelectTrigger className="w-40">
-              <ArrowUpDown className="w-4 h-4 mr-2" />
+            <SelectTrigger className="w-36 px-2">
+              <ArrowUpDown className="w-4 h-4 mr-1" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

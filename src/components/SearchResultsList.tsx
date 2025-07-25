@@ -39,11 +39,14 @@ export const SearchResultsList: React.FC<SearchResultsListProps> = ({
       {results.map((result) => (
         <div key={result.id} className="bg-background border rounded-lg overflow-hidden shadow-sm">
           {/* Cover Photo */}
-          <div className="h-32 bg-gray-200 relative">
+          <div className="h-32 bg-gray-200 relative overflow-hidden">
             <img 
               src={result.coverPhoto} 
               alt={result.name}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=200&fit=crop';
+              }}
             />
             <div className="absolute top-2 right-2 flex gap-1">
               <span className="text-xs bg-background px-2 py-1 rounded flex items-center gap-1">
@@ -79,9 +82,16 @@ export const SearchResultsList: React.FC<SearchResultsListProps> = ({
               )}>
                 {result.isOpen ? 'Open' : 'Closed'}
               </span>
-              <span className="text-muted-foreground">
-                Closes {result.closingTime}
-              </span>
+              {result.type !== 'hotel' && (
+                <span className="text-muted-foreground">
+                  Closes {result.closingTime}
+                </span>
+              )}
+              {result.type === 'hotel' && (
+                <span className="text-muted-foreground">
+                  Open 24 hours
+                </span>
+              )}
             </div>
 
             {/* Google Maps Description */}
