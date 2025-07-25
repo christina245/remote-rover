@@ -51,6 +51,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   const [filters, setFilters] = useState(initialFilters);
   const [searchResults, setSearchResults] = useState([]);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [mapCenter, setMapCenter] = useState<{lat: number, lng: number} | null>(null);
 
   useEffect(() => {
     getCurrentLocation();
@@ -128,6 +129,9 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
           searchCoords = { lat, lng };
         }
       }
+
+      // Update map center to show the searched location
+      setMapCenter(searchCoords);
 
       const results = [];
       
@@ -330,7 +334,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       <div className="h-64">
         <SearchResultsMap 
           apiKey={apiKeys.mapsStatic}
-          center={userLocation || { lat: 37.7749, lng: -122.4194 }}
+          center={mapCenter || userLocation || { lat: 37.7749, lng: -122.4194 }}
           results={searchResults}
         />
       </div>
