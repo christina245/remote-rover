@@ -137,7 +137,7 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
         </div>
 
         {/* Heading */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <h1 className="text-base font-bold text-black mb-2 font-ibm-plex leading-none">
             Find your next public remote workspace.
           </h1>
@@ -151,7 +151,7 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
 
         {/* Search Bar Container */}
         <div 
-          className="p-4 rounded-lg mb-6 w-[95%]"
+          className="p-4 rounded-lg mb-4 w-[95%]"
           style={{ backgroundColor: '#AC080B' }}
         >
           <div className="relative">
