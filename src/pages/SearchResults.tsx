@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { MapPin, Wifi, Zap, Dog, Volume2, CupSoda, Pizza, ClockAlert, Bus, Star, Navigation, Accessibility } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -36,20 +37,30 @@ interface SearchResultsProps {
   selectedFilters?: Set<string>;
 }
 
-export const SearchResults: React.FC<SearchResultsProps> = ({ 
-  apiKeys, 
-  searchLocation = 'San Francisco, CA', 
-  selectedFilters = new Set(['wifi', 'outlets']) 
-}) => {
-  const [location, setLocation] = useState(searchLocation);
-  const [filters, setFilters] = useState(selectedFilters);
+export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Get search params from navigation state or URL params
+  const searchParams = new URLSearchParams(location.search);
+  const initialLocation = location.state?.searchLocation || searchParams.get('location') || 'San Francisco, CA';
+  const initialFiltersArray = location.state?.selectedFilters || ['wifi', 'outlets'];
+  const initialFilters = new Set(initialFiltersArray);
+  
+  const [searchLocation, setSearchLocation] = useState(initialLocation);
+  const [filters, setFilters] = useState(initialFilters);
   const [searchResults, setSearchResults] = useState([]);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
 
   useEffect(() => {
     getCurrentLocation();
-    searchWorkspaces();
-  }, [location, filters]);
+  }, []);
+
+  useEffect(() => {
+    if (userLocation) {
+      searchWorkspaces();
+    }
+  }, [searchLocation, filters, userLocation]);
 
   const getCurrentLocation = () => {
     if ('geolocation' in navigator) {
@@ -76,9 +87,9 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
 
       // Convert location string to coordinates if needed
       let searchCoords = userLocation;
-      if (location !== 'San Francisco, CA') {
+      if (searchLocation !== 'San Francisco, CA') {
         const geocodeResponse = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${apiKeys.geocoding}`
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchLocation)}&key=${apiKeys.geocoding}`
         );
         const geocodeData = await geocodeResponse.json();
         if (geocodeData.results?.[0]) {
@@ -251,13 +262,6 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
     <div className="min-h-screen bg-background">
       {/* Header with Logo and Search */}
       <div className="p-4 bg-background border-b">
-        <div className="flex items-center gap-4 mb-4">
-          <img 
-            src={remoteRoverLogo} 
-            alt="Remote Rover" 
-            className="h-8 w-auto"
-          />
-        </div>
         
         {/* Search Bar */}
         <div 
@@ -267,8 +271,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
             <Input
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              value={searchLocation}
+              onChange={(e) => setSearchLocation(e.target.value)}
               placeholder="Search by city or ZIP"
               className="w-full pl-10 h-10 bg-background border-0 rounded-lg shadow-none focus-visible:ring-0"
             />
