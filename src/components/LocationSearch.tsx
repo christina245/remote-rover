@@ -128,11 +128,11 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
       {/* Main Content */}
       <div className="relative z-10 p-6 flex flex-col items-center">
         {/* Logo */}
-        <div className="mb-8 mt-12">
+        <div className="mb-3 mt-5">
           <img 
             src={remoteRoverLogo} 
             alt="Remote Rover" 
-            className="h-32 w-auto"
+            className="h-20 w-auto"
           />
         </div>
 
