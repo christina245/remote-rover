@@ -299,9 +299,16 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       const todayHours = openingHours?.periods?.find((period: any) => 
         period.open?.day === new Date().getDay()
       );
-      const closingTime = todayHours?.close ? 
-        `${Math.floor(todayHours.close.time / 100)}:${(todayHours.close.time % 100).toString().padStart(2, '0')}` : 
-        'Unknown';
+      
+      // Format closing time in AM/PM format
+      let closingTime = 'Unknown';
+      if (todayHours?.close) {
+        const hours = Math.floor(todayHours.close.time / 100);
+        const minutes = todayHours.close.time % 100;
+        const period = hours >= 12 ? 'pm' : 'am';
+        const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+        closingTime = `${displayHours}${minutes > 0 ? `:${minutes.toString().padStart(2, '0')}` : ''} ${period}`;
+      }
 
       // Get best photo for workspace - prioritize interior shots
       const photos = details.photos || [];
@@ -396,7 +403,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   return (
     <div className="min-h-screen relative">
       {/* Background Map */}
-      <div className="fixed inset-0 z-0">
+      <div className="h-80 bg-gray-100">
         <SearchResultsMap 
           apiKey={apiKeys.mapsStatic}
           center={mapCenter || userLocation || { lat: 37.7749, lng: -122.4194 }}
@@ -404,10 +411,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         />
       </div>
 
-      {/* Content Overlay */}
-      <div className="relative z-10">
-        {/* Header with Logo and Search */}
-        <div className="p-4 bg-background/95 backdrop-blur-sm border-b">
+      {/* Header with Logo and Search */}
+      <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-background/95 backdrop-blur-sm border-b">
           
           {/* Search Bar */}
           <div 
@@ -442,18 +447,29 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         </div>
 
         {/* Results List */}
-        <div className="p-4">
+        <div className="p-4 mt-40">
           <div className="bg-background/95 backdrop-blur-sm rounded-lg border p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-sm text-foreground">
+              <div className="flex items-center gap-1 text-sm text-foreground">
                 <span>
                   {isLoading ? 'Searching...' : `Found ${searchResults.length} work-friendly locations within`}
                 </span>
-                <span className="font-semibold">{radiusMiles} mi</span>
+                <button 
+                  className="font-semibold cursor-pointer"
+                  style={{ color: '#3E2098' }}
+                  onClick={() => {
+                    const options = [5, 10, 15, 20];
+                    const currentIndex = options.indexOf(radiusMiles);
+                    const nextIndex = (currentIndex + 1) % options.length;
+                    setRadiusMiles(options[nextIndex]);
+                  }}
+                >
+                  {radiusMiles} mi
+                </button>
               </div>
               <Select value={sortBy} onValueChange={(value: 'distance' | 'rating') => setSortBy(value)}>
-                <SelectTrigger className="w-36 px-1">
-                  <ArrowUpDown className="w-4 h-4 mr-1" />
+                <SelectTrigger className="w-36 px-2">
+                  <ArrowUpDown className="w-4 h-4 mr-2" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -466,6 +482,5 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
           </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
