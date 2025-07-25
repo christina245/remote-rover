@@ -192,11 +192,15 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         allResults.push(...results);
       }
 
+      console.log(`Found ${allResults.length} total places`);
+      
       // Process each place and filter by review content
       const processedResults = [];
       
       for (const place of allResults) {
         try {
+          console.log(`Processing place: ${place.name}`);
+          
           const details = await new Promise<any>((resolve) => {
             service.getDetails({
               placeId: place.place_id,
@@ -205,6 +209,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
               if (status === google.maps.places.PlacesServiceStatus.OK) {
                 resolve(result);
               } else {
+                console.error(`Failed to get details for ${place.name}:`, status);
                 resolve(null);
               }
             });
@@ -214,12 +219,17 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
             const processedPlace = await processPlaceData(place, details, searchCoords);
             if (processedPlace) {
               processedResults.push(processedPlace);
+              console.log(`Added ${place.name} to results`);
             }
+          } else {
+            console.log(`Filtered out ${place.name} - no work reviews`);
           }
         } catch (error) {
           console.error('Error processing place:', error);
         }
       }
+      
+      console.log(`Final results: ${processedResults.length} work-friendly places`);
 
       // Sort results by selected criteria
       const sortedResults = processedResults.sort((a, b) => {
@@ -239,19 +249,17 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   };
 
   const hasWorkReviews = (reviews: any[]) => {
-    const workKeywords = ['laptop', 'work', 'outlets', 'wifi', 'study', 'remote'];
-    let relevantReviewCount = 0;
+    console.log(`Checking reviews for place: ${reviews.length} total reviews`);
     
     for (const review of reviews) {
       const reviewText = review.text?.toLowerCase() || '';
-      if (workKeywords.some(keyword => reviewText.includes(keyword))) {
-        relevantReviewCount++;
-        if (relevantReviewCount >= 2) {
-          return true;
-        }
+      if (reviewText.includes('work')) {
+        console.log('Found work-related review:', reviewText.slice(0, 100));
+        return true;
       }
     }
     
+    console.log('No work-related reviews found');
     return false;
   };
 
