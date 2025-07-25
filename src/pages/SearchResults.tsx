@@ -401,19 +401,17 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   const activeFilterChips = filterChips.filter(chip => filters.has(chip.id));
 
   return (
-    <div className="min-h-screen relative">
-      {/* Background Map */}
-      <div className="h-80 bg-gray-100">
+    <div className="min-h-screen flex flex-col">
+      {/* Background Map - 30% of screen */}
+      <div className="h-[30vh] bg-gray-100 relative">
         <SearchResultsMap 
           apiKey={apiKeys.mapsStatic}
           center={mapCenter || userLocation || { lat: 37.7749, lng: -122.4194 }}
           results={searchResults}
         />
-      </div>
-
-      {/* Header with Logo and Search */}
-      <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-background/95 backdrop-blur-sm border-b">
-          
+        
+        {/* Header with Logo and Search - Overlay on map */}
+        <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-background/95 backdrop-blur-sm border-b">
           {/* Search Bar */}
           <div 
             className="p-3 rounded-lg mb-4"
@@ -445,42 +443,42 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Results List */}
-        <div className="p-4 mt-40">
-          <div className="bg-background/95 backdrop-blur-sm rounded-lg border p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-1 text-sm text-foreground">
-                <span>
-                  {isLoading ? 'Searching...' : `Found ${searchResults.length} work-friendly locations within`}
-                </span>
-                <button 
-                  className="font-semibold cursor-pointer"
-                  style={{ color: '#3E2098' }}
-                  onClick={() => {
-                    const options = [5, 10, 15, 20];
-                    const currentIndex = options.indexOf(radiusMiles);
-                    const nextIndex = (currentIndex + 1) % options.length;
-                    setRadiusMiles(options[nextIndex]);
-                  }}
-                >
-                  {radiusMiles} mi
-                </button>
-              </div>
-              <Select value={sortBy} onValueChange={(value: 'distance' | 'rating') => setSortBy(value)}>
-                <SelectTrigger className="w-36 px-2">
-                  <ArrowUpDown className="w-4 h-4 mr-2" />
+      {/* Results List - Fill remaining space */}
+      <div className="flex-1 bg-background">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-1 text-sm text-foreground flex-wrap">
+              <span>
+                {isLoading ? 'Searching...' : `Found ${searchResults.length} work-friendly locations within`}
+              </span>
+              <Select value={radiusMiles.toString()} onValueChange={(value) => setRadiusMiles(parseInt(value))}>
+                <SelectTrigger className="w-16 h-6 px-1 text-sm font-semibold border-0 shadow-none" style={{ color: '#3E2098' }}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="distance">Sort by Distance</SelectItem>
-                  <SelectItem value="rating">Sort by Rating</SelectItem>
+                  <SelectItem value="5">5 mi</SelectItem>
+                  <SelectItem value="10">10 mi</SelectItem>
+                  <SelectItem value="15">15 mi</SelectItem>
+                  <SelectItem value="20">20 mi</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <SearchResultsList results={searchResults} userLocation={userLocation} />
+            <Select value={sortBy} onValueChange={(value: 'distance' | 'rating') => setSortBy(value)}>
+              <SelectTrigger className="w-32 px-2">
+                <ArrowUpDown className="w-4 h-4 mr-1" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="distance">Sort by Distance</SelectItem>
+                <SelectItem value="rating">Sort by Rating</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+          <SearchResultsList results={searchResults} userLocation={userLocation} />
         </div>
       </div>
+    </div>
     );
   };
