@@ -81,6 +81,37 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     }
   };
 
+  const isValidLocation = (input: string) => {
+    const trimmed = input.trim();
+    if (!trimmed) return false;
+    
+    // Check for zip code (5 digits or 5+4 format)
+    const zipRegex = /^\d{5}(-\d{4})?$/;
+    if (zipRegex.test(trimmed)) return true;
+    
+    // Check for city name (at least 2 characters, contains letters)
+    const cityRegex = /^[a-zA-Z\s,.-]{2,}$/;
+    return cityRegex.test(trimmed);
+  };
+
+  const handleSearch = () => {
+    if (isValidLocation(searchLocation)) {
+      const params = new URLSearchParams({
+        location: searchLocation.trim(),
+        filters: Array.from(filters).join(',')
+      });
+      navigate(`/search?${params.toString()}`);
+      // Trigger new search
+      searchWorkspaces();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const searchWorkspaces = async () => {
     try {
       if (!userLocation) return;
@@ -273,6 +304,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
             <Input
               value={searchLocation}
               onChange={(e) => setSearchLocation(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Search by city or ZIP"
               className="w-full pl-10 h-10 bg-background border-0 rounded-lg shadow-none focus-visible:ring-0"
             />
