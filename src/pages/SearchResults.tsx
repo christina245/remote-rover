@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { MapPin, Wifi, Zap, Dog, Volume2, CupSoda, Pizza, ClockAlert, Bus, Star, Navigation, Accessibility } from 'lucide-react';
+import { MapPin, Wifi, Zap, Dog, Volume2, CupSoda, Pizza, ClockAlert, Bus, Star, Navigation, Accessibility, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { SearchResultsMap } from '@/components/SearchResultsMap';
 import { SearchResultsList } from '@/components/SearchResultsList';
@@ -52,16 +54,43 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [mapCenter, setMapCenter] = useState<{lat: number, lng: number} | null>(null);
+  const [sortBy, setSortBy] = useState<'distance' | 'rating'>('distance');
+  const [isLoading, setIsLoading] = useState(false);
+  const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
 
   useEffect(() => {
     getCurrentLocation();
+    
+    // Check if Google Maps is already loaded
+    if (window.googleMapsLoaded) {
+      setGoogleMapsLoaded(true);
+    } else {
+      // Listen for Google Maps load event
+      const handleMapsLoaded = () => setGoogleMapsLoaded(true);
+      window.addEventListener('google-maps-loaded', handleMapsLoaded);
+      return () => window.removeEventListener('google-maps-loaded', handleMapsLoaded);
+    }
   }, []);
 
   useEffect(() => {
-    if (userLocation) {
+    if (userLocation && googleMapsLoaded) {
       searchWorkspaces();
     }
-  }, [searchLocation, filters, userLocation]);
+  }, [searchLocation, filters, userLocation, googleMapsLoaded]);
+
+  useEffect(() => {
+    // Sort results when sortBy changes
+    if (searchResults.length > 0) {
+      const sortedResults = [...searchResults].sort((a, b) => {
+        if (sortBy === 'distance') {
+          return parseFloat(a.distance) - parseFloat(b.distance);
+        } else {
+          return b.rating - a.rating;
+        }
+      });
+      setSearchResults(sortedResults);
+    }
+  }, [sortBy]);
 
   const getCurrentLocation = () => {
     if ('geolocation' in navigator) {
@@ -115,7 +144,9 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
 
   const searchWorkspaces = async () => {
     try {
-      if (!userLocation) return;
+      if (!userLocation || !googleMapsLoaded) return;
+      
+      setIsLoading(true);
 
       // Convert location string to coordinates if needed
       let searchCoords = userLocation;
@@ -133,102 +164,95 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       // Update map center to show the searched location
       setMapCenter(searchCoords);
 
-      // Create mock results with real-looking data for the searched location
-      const mockResults = [
-        {
-          id: '1',
-          name: 'Blue Bottle Coffee',
-          type: 'cafe',
-          rating: 4.3,
-          reviewCount: 157,
-          isOpen: true,
-          openUntil: '8:00 PM',
-          distance: 0.8,
-          location: { lat: searchCoords.lat + 0.01, lng: searchCoords.lng + 0.01 },
-          amenities: {
-            wifi: true,
-            outlets: true,
-            quiet: false,
-            petFriendly: false,
-            food: true,
-            boba: false,
-            transit: true,
-            late: false
-          },
-          isWheelchairAccessible: true,
-          description: `Located in the heart of ${searchLocation.split(',')[0]}`,
-          workFriendlySummary: '✨ Reviews mention reliable WiFi and plenty of charging outlets - great for remote work.',
-          coverPhoto: 'https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=400&h=300&fit=crop'
-        },
-        {
-          id: '2', 
-          name: `${searchLocation.split(',')[0]} Public Library`,
-          type: 'library',
-          rating: 4.6,
-          reviewCount: 89,
-          isOpen: true,
-          openUntil: '6:00 PM',
-          distance: 1.2,
-          location: { lat: searchCoords.lat - 0.015, lng: searchCoords.lng + 0.005 },
-          amenities: {
-            wifi: true,
-            outlets: true,
-            quiet: true,
-            petFriendly: false,
-            food: false,
-            boba: false,
-            transit: true,
-            late: false
-          },
-          isWheelchairAccessible: true,
-          description: `Public library serving the ${searchLocation.split(',')[0]} community`,
-          workFriendlySummary: '✨ Quiet atmosphere with free WiFi and study areas - perfect for focused work.',
-          coverPhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop'
-        },
-        {
-          id: '3',
-          name: 'Philz Coffee',
-          type: 'cafe',
-          rating: 4.1,
-          reviewCount: 203,
-          isOpen: true,
-          openUntil: '7:00 PM',
-          distance: 1.5,
-          location: { lat: searchCoords.lat + 0.02, lng: searchCoords.lng - 0.01 },
-          amenities: {
-            wifi: true,
-            outlets: true,
-            quiet: false,
-            petFriendly: true,
-            food: true,
-            boba: false,
-            transit: false,
-            late: false
-          },
-          isWheelchairAccessible: true,
-          description: `Custom-blended coffee in ${searchLocation.split(',')[0]}`,
-          workFriendlySummary: '✨ Laptop-friendly with good WiFi and outlets - reviews mention it as great for remote work.',
-          coverPhoto: 'https://images.unsplash.com/photo-1559496417-e7f25cb247cd?w=400&h=300&fit=crop'
-        }
-      ];
+      // Initialize Google Places service
+      const map = new google.maps.Map(document.createElement('div'));
+      const service = new google.maps.places.PlacesService(map);
 
-      // Filter results based on selected filters
-      const filteredResults = mockResults.filter(result => {
-        if (filters.has('wifi') && !result.amenities.wifi) return false;
-        if (filters.has('outlets') && !result.amenities.outlets) return false;
-        if (filters.has('quiet') && !result.amenities.quiet) return false;
-        if (filters.has('pet-friendly') && !result.amenities.petFriendly) return false;
-        if (filters.has('food') && !result.amenities.food) return false;
-        if (filters.has('boba') && !result.amenities.boba) return false;
-        if (filters.has('transit') && !result.amenities.transit) return false;
-        if (filters.has('late') && !result.amenities.late) return false;
-        return true;
+      // Search for different place types
+      const placeTypes = ['cafe', 'library', 'lodging'];
+      const allResults = [];
+
+      for (const type of placeTypes) {
+        const request = {
+          location: new google.maps.LatLng(searchCoords.lat, searchCoords.lng),
+          radius: 16093, // 10 miles in meters
+          type: type === 'lodging' ? 'lodging' : type
+        };
+
+        const results = await new Promise<any[]>((resolve) => {
+          service.nearbySearch(request, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+              resolve(results || []);
+            } else {
+              resolve([]);
+            }
+          });
+        });
+
+        allResults.push(...results);
+      }
+
+      // Process each place and filter by review content
+      const processedResults = [];
+      
+      for (const place of allResults) {
+        try {
+          const details = await new Promise<any>((resolve) => {
+            service.getDetails({
+              placeId: place.place_id,
+              fields: ['name', 'rating', 'user_ratings_total', 'opening_hours', 'photos', 'reviews', 'types', 'wheelchair_accessible_entrance', 'formatted_address']
+            }, (result, status) => {
+              if (status === google.maps.places.PlacesServiceStatus.OK) {
+                resolve(result);
+              } else {
+                resolve(null);
+              }
+            });
+          });
+
+          if (details && details.reviews && hasWorkReviews(details.reviews)) {
+            const processedPlace = await processPlaceData(place, details, searchCoords);
+            if (processedPlace) {
+              processedResults.push(processedPlace);
+            }
+          }
+        } catch (error) {
+          console.error('Error processing place:', error);
+        }
+      }
+
+      // Sort results by selected criteria
+      const sortedResults = processedResults.sort((a, b) => {
+        if (sortBy === 'distance') {
+          return parseFloat(a.distance) - parseFloat(b.distance);
+        } else {
+          return b.rating - a.rating;
+        }
       });
 
-      setSearchResults(filteredResults);
+      setSearchResults(sortedResults);
     } catch (error) {
       console.error('Error searching workspaces:', error);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const hasWorkReviews = (reviews: any[]) => {
+    const workKeywords = ['laptop', 'work', 'outlets', 'wifi', 'study', 'remote'];
+    let relevantReviewCount = 0;
+    
+    for (const review of reviews) {
+      const reviewText = review.text?.toLowerCase() || '';
+      if (workKeywords.some(keyword => reviewText.includes(keyword))) {
+        relevantReviewCount++;
+        if (relevantReviewCount >= 2) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
   };
 
   const getPlaceDetails = async (placeId: string) => {
@@ -245,25 +269,23 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
 
   const processPlaceData = async (place: any, details: any, userCoords: {lat: number, lng: number}) => {
     try {
-      const placeResult = details?.result || {};
-      
       // Calculate distance
       const distance = calculateDistance(
         userCoords.lat, userCoords.lng,
-        place.geometry.location.lat, place.geometry.location.lng
+        place.geometry.location.lat(), place.geometry.location.lng()
       );
 
       // Determine place type
       const types = place.types || [];
       let placeType = 'hotel'; // default
-      if (types.includes('cafe') || types.includes('coffee_shop') || types.includes('food')) {
+      if (types.includes('cafe') || types.includes('coffee_shop') || types.includes('bakery')) {
         placeType = 'cafe';
       } else if (types.includes('library')) {
         placeType = 'library';
       }
 
       // Get opening hours
-      const openingHours = placeResult.opening_hours;
+      const openingHours = details.opening_hours;
       const isOpen = openingHours?.open_now || false;
       const todayHours = openingHours?.periods?.find((period: any) => 
         period.open?.day === new Date().getDay()
@@ -273,13 +295,13 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         'Unknown';
 
       // Get best photo for workspace
-      const photos = placeResult.photos || [];
+      const photos = details.photos || [];
       const coverPhoto = photos.length > 0 ? 
         `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photos[0].photo_reference}&key=${apiKeys.places}` :
         '/placeholder.svg';
 
       // Generate work-friendly summary from reviews
-      const workFriendlySummary = await generateWorkFriendlySummary(placeResult.reviews || []);
+      const workFriendlySummary = generateWorkFriendlySummary(details.reviews || []);
 
       return {
         id: place.place_id,
@@ -288,13 +310,13 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         rating: place.rating || 0,
         reviewCount: place.user_ratings_total || 0,
         isOpen,
-        closingTime: isOpen ? closingTime : 'Closed',
-        distance: `${distance.toFixed(1)} mi`,
-        isWheelchairAccessible: placeResult.wheelchair_accessible_entrance || false,
-        description: placeResult.editorial_summary?.overview || place.formatted_address || '',
+        openUntil: isOpen ? closingTime : 'Closed',
+        distance: distance.toFixed(1),
+        isWheelchairAccessible: details.wheelchair_accessible_entrance || false,
+        description: details.formatted_address || '',
         workFriendlySummary,
         coverPhoto,
-        location: place.geometry.location
+        location: { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() }
       };
     } catch (error) {
       console.error('Error processing place data:', error);
@@ -313,7 +335,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     return R * c;
   };
 
-  const generateWorkFriendlySummary = async (reviews: any[]) => {
+  const generateWorkFriendlySummary = (reviews: any[]) => {
     const workKeywords = ['wifi', 'laptop', 'work', 'study', 'outlets', 'quiet', 'internet', 'charge', 'cowork'];
     const relevantReviews = reviews.filter(review => 
       workKeywords.some(keyword => 
@@ -401,11 +423,18 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       <div className="p-4">
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-foreground">
-            Showing locations within <span className="font-medium">10 miles</span>
+            {isLoading ? 'Searching...' : `Found ${searchResults.length} work-friendly locations`}
           </p>
-          <button className="text-sm text-primary font-medium">
-            Sort by ▼
-          </button>
+          <Select value={sortBy} onValueChange={(value: 'distance' | 'rating') => setSortBy(value)}>
+            <SelectTrigger className="w-40">
+              <ArrowUpDown className="w-4 h-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="distance">Sort by Distance</SelectItem>
+              <SelectItem value="rating">Sort by Rating</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <SearchResultsList 
