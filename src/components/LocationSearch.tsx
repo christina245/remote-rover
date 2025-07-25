@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Wifi, Zap, User, Volume2, Coffee, MapPinIcon } from 'lucide-react';
+import { MapPin, Wifi, Zap, Dog, Volume2, CupSoda, Hamburger, ClockAlert, MapPinIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
