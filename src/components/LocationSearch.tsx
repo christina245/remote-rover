@@ -3,6 +3,7 @@ import { MapPin, Wifi, Zap, Dog, Volume2, CupSoda, Pizza, ClockAlert, Bus } from
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 // Using uploaded logo directly from Lovable
 const remoteRoverLogo = '/lovable-uploads/c065750f-ed6d-4fd1-9952-2daae5eb3972.png';
 
@@ -34,6 +35,7 @@ interface LocationSearchProps {
 }
 
 export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
+  const navigate = useNavigate();
   const [location, setLocation] = useState('');
   const [selectedFilters, setSelectedFilters] = useState<Set<string>>(
     new Set(filterChips.filter(chip => chip.defaultSelected).map(chip => chip.id))
@@ -113,6 +115,22 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
     setSelectedFilters(newSelected);
   };
 
+  const handleSearch = () => {
+    if (location.trim()) {
+      const params = new URLSearchParams({
+        location: location.trim(),
+        filters: Array.from(selectedFilters).join(',')
+      });
+      navigate(`/search?${params.toString()}`);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Google Maps Background */}
@@ -159,6 +177,7 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
             <Input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Search by city or ZIP"
               className="w-[100%] pl-10 h-12 bg-background border-0 rounded-lg shadow-none focus-visible:ring-0"
               disabled={isLoadingLocation}
