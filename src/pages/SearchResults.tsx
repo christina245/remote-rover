@@ -138,12 +138,13 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         {
           id: '1',
           name: 'Blue Bottle Coffee',
-          type: 'Cafe',
+          type: 'cafe',
           rating: 4.3,
           reviewCount: 157,
           isOpen: true,
           openUntil: '8:00 PM',
           distance: 0.8,
+          location: { lat: searchCoords.lat + 0.01, lng: searchCoords.lng + 0.01 },
           amenities: {
             wifi: true,
             outlets: true,
@@ -162,12 +163,13 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         {
           id: '2', 
           name: `${searchLocation.split(',')[0]} Public Library`,
-          type: 'Library',
+          type: 'library',
           rating: 4.6,
           reviewCount: 89,
           isOpen: true,
           openUntil: '6:00 PM',
           distance: 1.2,
+          location: { lat: searchCoords.lat - 0.015, lng: searchCoords.lng + 0.005 },
           amenities: {
             wifi: true,
             outlets: true,
@@ -186,12 +188,13 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         {
           id: '3',
           name: 'Philz Coffee',
-          type: 'Cafe',
+          type: 'cafe',
           rating: 4.1,
           reviewCount: 203,
           isOpen: true,
           openUntil: '7:00 PM',
           distance: 1.5,
+          location: { lat: searchCoords.lat + 0.02, lng: searchCoords.lng - 0.01 },
           amenities: {
             wifi: true,
             outlets: true,
