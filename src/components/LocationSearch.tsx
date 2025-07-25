@@ -15,12 +15,12 @@ interface FilterChip {
 const filterChips: FilterChip[] = [
   { id: 'wifi', label: 'Wifi', icon: <Wifi size={16} />, defaultSelected: true },
   { id: 'outlets', label: 'Outlets', icon: <Zap size={16} />, defaultSelected: true },
-  { id: 'pet-friendly', label: 'Pet-friendly', icon: <User size={16} /> },
+  { id: 'pet-friendly', label: 'Pet-friendly', icon: <Dog size={16} /> },
   { id: 'quiet', label: 'Quiet area', icon: <Volume2 size={16} /> },
   { id: 'transit', label: 'Near public transit', icon: <MapPinIcon size={16} /> },
-  { id: 'boba', label: 'Has boba', icon: <Coffee size={16} /> },
-  { id: 'food', label: 'Has food', icon: <Coffee size={16} /> },
-  { id: 'late', label: 'Open late', icon: <Coffee size={16} /> },
+  { id: 'boba', label: 'Has boba', icon: <CupSoda size={16} /> },
+  { id: 'food', label: 'Has food', icon: <Hamburger size={16} /> },
+  { id: 'late', label: 'Open late', icon: <ClockAlert size={16} /> },
 ];
 
 interface LocationSearchProps {
