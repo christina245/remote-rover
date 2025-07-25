@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import { SearchResults } from "./pages/SearchResults";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -16,6 +17,12 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/search" element={<SearchResults apiKeys={{
+            geocoding: 'AIzaSyBBizxEZH19qkO4GDzBkZAZ8pvy14wcjBs',
+            geolocation: 'AIzaSyAbR4VzYYT2OhgJ_8DWAszxKOZwQ1pyFtQ',
+            mapsStatic: 'AIzaSyCW8PE-yqe-PtuDH852UZpo139T9FXYne8',
+            places: 'AIzaSyD8EE_1ZCdBK8N3OBVLfQmTQWRW0Iuk5Y8',
+          }} />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

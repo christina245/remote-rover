@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Wifi, Zap, Dog, Volume2, CupSoda, Pizza, ClockAlert, Bus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 // Using uploaded logo directly from Lovable
 const remoteRoverLogo = '/lovable-uploads/c065750f-ed6d-4fd1-9952-2daae5eb3972.png';
 
@@ -34,6 +36,7 @@ interface LocationSearchProps {
 }
 
 export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
+  const navigate = useNavigate();
   const [location, setLocation] = useState('');
   const [selectedFilters, setSelectedFilters] = useState<Set<string>>(
     new Set(filterChips.filter(chip => chip.defaultSelected).map(chip => chip.id))
@@ -113,6 +116,15 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
     setSelectedFilters(newSelected);
   };
 
+  const handleSearch = () => {
+    navigate('/search', { 
+      state: { 
+        searchLocation: location, 
+        selectedFilters: Array.from(selectedFilters) 
+      } 
+    });
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Google Maps Background */}
@@ -170,7 +182,7 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
         <p className="text-foreground font-medium mb-4 text-sm">I'm looking for:</p>
 
         {/* Filter Chips */}
-        <div className="flex flex-wrap justify-center gap-2 max-w-sm">
+        <div className="flex flex-wrap justify-center gap-2 max-w-sm mb-6">
           {filterChips.map((chip) => (
             <button
               key={chip.id}
@@ -190,6 +202,16 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
             </button>
           ))}
         </div>
+
+        {/* Search Button */}
+        <Button 
+          onClick={handleSearch}
+          className="w-full max-w-sm h-12 text-white font-medium"
+          style={{ backgroundColor: '#AC080B' }}
+          disabled={isLoadingLocation || !location.trim()}
+        >
+          Find Workspaces
+        </Button>
       </div>
     </div>
   );
