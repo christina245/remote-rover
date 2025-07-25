@@ -160,7 +160,7 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
             Find your next public remote workspace.
           </h1>
           <p className="text-muted-foreground text-sm max-w-sm">
-            Remote Rover searches local cafes, hotels, and other spaces to find which ones could be your next workspace.
+            Remote Rover searches local cafes, hotels, and other spaces to find spaces suited for remote work.
           </p>
           <p className="text-muted-foreground text-sm mt-2">
             No membership fees needed. Just show up, plug in, and get things done.
