@@ -3,7 +3,8 @@ import { MapPin, Wifi, Zap, Dog, Volume2, CupSoda, Pizza, ClockAlert, Bus } from
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import remoteRoverLogo from '@/assets/remote-rover-logo.png';
+// Using uploaded logo directly from Lovable
+const remoteRoverLogo = '/lovable-uploads/c065750f-ed6d-4fd1-9952-2daae5eb3972.png';
 
 interface FilterChip {
   id: string;
