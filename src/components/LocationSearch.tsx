@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Wifi, Zap, Dog, Volume2, CupSoda, Hamburger, ClockAlert, MapPinIcon } from 'lucide-react';
+import { MapPin, Wifi, Zap, Dog, Volume2, CupSoda, Pizza, ClockAlert, MapPinIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -19,7 +19,7 @@ const filterChips: FilterChip[] = [
   { id: 'quiet', label: 'Quiet area', icon: <Volume2 size={16} /> },
   { id: 'transit', label: 'Near public transit', icon: <MapPinIcon size={16} /> },
   { id: 'boba', label: 'Has boba', icon: <CupSoda size={16} /> },
-  { id: 'food', label: 'Has food', icon: <Hamburger size={16} /> },
+  { id: 'food', label: 'Has food', icon: <Pizza size={16} /> },
   { id: 'late', label: 'Open late', icon: <ClockAlert size={16} /> },
 ];
 
