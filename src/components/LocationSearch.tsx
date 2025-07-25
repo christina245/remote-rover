@@ -150,7 +150,7 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
 
         {/* Search Bar Container */}
         <div 
-          className="p-1 rounded-lg mb-6"
+          className="p-4 rounded-lg mb-6"
           style={{ backgroundColor: '#AC080B' }}
         >
           <div className="relative">
