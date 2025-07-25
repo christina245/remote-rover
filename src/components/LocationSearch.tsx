@@ -160,7 +160,7 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Search by city or ZIP"
-              className="w-[80%] pl-10 h-12 bg-background border-0 rounded-lg shadow-none focus-visible:ring-0"
+              className="w-[100%] pl-10 h-12 bg-background border-0 rounded-lg shadow-none focus-visible:ring-0"
               disabled={isLoadingLocation}
             />
           </div>
