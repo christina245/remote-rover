@@ -128,7 +128,7 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
       {/* Main Content */}
       <div className="relative z-10 p-6 flex flex-col items-center">
         {/* Logo */}
-        <div className="mb-4 mt-4">
+        <div className="mb-8 mt-12">
           <img 
             src={remoteRoverLogo} 
             alt="Remote Rover" 
@@ -151,7 +151,7 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
 
         {/* Search Bar Container */}
         <div 
-          className="p-4 rounded-lg mb-6"
+          className="p-4 rounded-lg mb-6 w-[130%]"
           style={{ backgroundColor: '#AC080B' }}
         >
           <div className="relative">
@@ -160,7 +160,7 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Search by city or ZIP"
-              className="pl-10 h-12 bg-background border-0 rounded-lg shadow-none focus-visible:ring-0"
+              className="w-[130%] pl-10 h-12 bg-background border-0 rounded-lg shadow-none focus-visible:ring-0"
               disabled={isLoadingLocation}
             />
           </div>
