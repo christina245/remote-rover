@@ -330,7 +330,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         rating: place.rating || 0,
         reviewCount: place.user_ratings_total || 0,
         isOpen,
-        openUntil: isOpen ? closingTime : 'Closed',
+        closingTime,
         distance: distance.toFixed(1),
         isWheelchairAccessible: details.wheelchair_accessible_entrance || false,
         description: details.formatted_address || '',
@@ -394,44 +394,9 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   const activeFilterChips = filterChips.filter(chip => filters.has(chip.id));
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header with Logo and Search */}
-      <div className="p-4 bg-background border-b">
-        
-        {/* Search Bar */}
-        <div 
-          className="p-3 rounded-lg mb-4"
-          style={{ backgroundColor: '#AC080B' }}
-        >
-          <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
-            <Input
-              value={searchLocation}
-              onChange={(e) => setSearchLocation(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Search by city or ZIP"
-              className="w-full pl-10 h-10 bg-background border-0 rounded-lg shadow-none focus-visible:ring-0"
-            />
-          </div>
-        </div>
-
-        {/* Selected Filter Tags */}
-        <div className="flex flex-wrap gap-2">
-          {activeFilterChips.map((chip) => (
-            <div
-              key={chip.id}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium text-white"
-              style={{ backgroundColor: '#3E2098' }}
-            >
-              {chip.icon}
-              {chip.label}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Map Section */}
-      <div className="h-64">
+    <div className="min-h-screen relative">
+      {/* Background Map */}
+      <div className="fixed inset-0 z-0">
         <SearchResultsMap 
           apiKey={apiKeys.mapsStatic}
           center={mapCenter || userLocation || { lat: 37.7749, lng: -122.4194 }}
@@ -439,42 +404,67 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         />
       </div>
 
-      {/* Results List */}
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2 text-sm text-foreground">
-            <span>
-              {isLoading ? 'Searching...' : `Found ${searchResults.length} work-friendly locations within`}
-            </span>
-            <Select value={radiusMiles.toString()} onValueChange={(value) => setRadiusMiles(parseInt(value))}>
-              <SelectTrigger className="w-20 h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="5">5</SelectItem>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="15">15</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-              </SelectContent>
-            </Select>
-            <span className="font-semibold">mi</span>
+      {/* Content Overlay */}
+      <div className="relative z-10">
+        {/* Header with Logo and Search */}
+        <div className="p-4 bg-background/95 backdrop-blur-sm border-b">
+          
+          {/* Search Bar */}
+          <div 
+            className="p-3 rounded-lg mb-4"
+            style={{ backgroundColor: '#AC080B' }}
+          >
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
+              <Input
+                value={searchLocation}
+                onChange={(e) => setSearchLocation(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Search by city or ZIP"
+                className="w-full pl-10 h-10 bg-background border-0 rounded-lg shadow-none focus-visible:ring-0"
+              />
+            </div>
           </div>
-          <Select value={sortBy} onValueChange={(value: 'distance' | 'rating') => setSortBy(value)}>
-            <SelectTrigger className="w-36 px-2">
-              <ArrowUpDown className="w-4 h-4 mr-1" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="distance">Sort by Distance</SelectItem>
-              <SelectItem value="rating">Sort by Rating</SelectItem>
-            </SelectContent>
-          </Select>
+
+          {/* Selected Filter Tags */}
+          <div className="flex flex-wrap gap-2">
+            {activeFilterChips.map((chip) => (
+              <div
+                key={chip.id}
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium text-white"
+                style={{ backgroundColor: '#3E2098' }}
+              >
+                {chip.icon}
+                {chip.label}
+              </div>
+            ))}
+          </div>
         </div>
 
-        <SearchResultsList 
-          results={searchResults}
-          userLocation={userLocation}
-        />
+        {/* Results List */}
+        <div className="p-4">
+          <div className="bg-background/95 backdrop-blur-sm rounded-lg border p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 text-sm text-foreground">
+                <span>
+                  {isLoading ? 'Searching...' : `Found ${searchResults.length} work-friendly locations within`}
+                </span>
+                <span className="font-semibold">{radiusMiles} mi</span>
+              </div>
+              <Select value={sortBy} onValueChange={(value: 'distance' | 'rating') => setSortBy(value)}>
+                <SelectTrigger className="w-36 px-1">
+                  <ArrowUpDown className="w-4 h-4 mr-1" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="distance">Sort by Distance</SelectItem>
+                  <SelectItem value="rating">Sort by Rating</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <SearchResultsList results={searchResults} userLocation={userLocation} />
+          </div>
+        </div>
       </div>
     </div>
   );

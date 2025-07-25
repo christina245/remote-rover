@@ -45,7 +45,13 @@ export const SearchResultsList: React.FC<SearchResultsListProps> = ({
               alt={result.name}
               className="w-full h-full object-cover"
               onError={(e) => {
-                e.currentTarget.src = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=200&fit=crop';
+                // Fallback to interior/workspace photos based on place type
+                const fallbackImages = {
+                  cafe: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&h=200&fit=crop', // Cafe interior with people working
+                  library: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=200&fit=crop', // Library interior
+                  hotel: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=400&h=200&fit=crop' // Hotel lobby/workspace
+                };
+                e.currentTarget.src = fallbackImages[result.type as keyof typeof fallbackImages] || fallbackImages.cafe;
               }}
             />
             <div className="absolute top-2 right-2 flex gap-1">
@@ -75,22 +81,36 @@ export const SearchResultsList: React.FC<SearchResultsListProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-4 mb-3 text-sm">
-              <span className={cn(
-                "font-medium",
-                result.isOpen ? "text-green-600" : "text-[#AC080B]"
-              )}>
-                {result.isOpen ? 'Open' : 'Closed'}
-              </span>
-              {result.type !== 'hotel' && (
-                <span className="text-muted-foreground">
-                  Closes {result.closingTime}
-                </span>
-              )}
-              {result.type === 'hotel' && (
-                <span className="text-muted-foreground">
+            <div className="flex items-center gap-2 mb-3 text-sm">
+              {result.type === 'hotel' ? (
+                <span className="font-medium text-green-600">
                   Open 24 hours
                 </span>
+              ) : (
+                <>
+                  <span className={cn(
+                    "font-medium",
+                    result.isOpen ? "text-green-600" : "text-[#AC080B]"
+                  )}>
+                    {result.isOpen ? 'Open' : 'Closed'}
+                  </span>
+                  {result.isOpen && (
+                    <>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground">
+                        Closes at {result.closingTime}
+                      </span>
+                    </>
+                  )}
+                  {!result.isOpen && (
+                    <>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground">
+                        Closes at {result.closingTime}
+                      </span>
+                    </>
+                  )}
+                </>
               )}
             </div>
 
