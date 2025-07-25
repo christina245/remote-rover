@@ -72,44 +72,177 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
 
   const searchWorkspaces = async () => {
     try {
-      // This will use Google Places API to search for cafes, libraries, hotels
-      // with work-friendly keywords in reviews
-      const mockResults = [
-        {
-          id: '1',
-          name: 'Cafe Name',
-          type: 'cafe',
-          rating: 4.1,
-          reviewCount: 120,
-          isOpen: true,
-          closingTime: '9 pm',
-          distance: '1.3 mi',
-          isWheelchairAccessible: true,
-          description: 'Pull description from Google Maps here! Maximum three lines, overflow.',
-          workFriendlySummary: '✨ AI-generated summary of reviews that mention the user\'s selected tags, such as a diverse drink menu, plenty of outlets, or affordable food. Max 150 characters and 6 lines.',
-          coverPhoto: '/placeholder.svg',
-          location: { lat: 37.7849, lng: -122.4094 }
-        },
-        {
-          id: '2',
-          name: 'Library Name',
-          type: 'library',
-          rating: 4.1,
-          reviewCount: 120,
-          isOpen: true,
-          closingTime: '9 pm',
-          distance: '2.3 mi',
-          isWheelchairAccessible: false,
-          description: 'Pull description from Google Maps here! Maximum three lines, overflow.',
-          workFriendlySummary: '✨ AI-generated summary of reviews that mention the user\'s selected tags, such as a diverse drink menu, plenty of outlets, or affordable food. Max 150 characters and 6 lines.',
-          coverPhoto: '/placeholder.svg',
-          location: { lat: 37.7649, lng: -122.4294 }
+      if (!userLocation) return;
+
+      // Convert location string to coordinates if needed
+      let searchCoords = userLocation;
+      if (location !== 'San Francisco, CA') {
+        const geocodeResponse = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${apiKeys.geocoding}`
+        );
+        const geocodeData = await geocodeResponse.json();
+        if (geocodeData.results?.[0]) {
+          const { lat, lng } = geocodeData.results[0].geometry.location;
+          searchCoords = { lat, lng };
         }
+      }
+
+      const results = [];
+      
+      // Search for different place types
+      const searchQueries = [
+        'coffee shop wifi laptop work',
+        'library study wifi',
+        'hotel lobby wifi work',
+        'coworking space',
+        'cafe wifi outlets'
       ];
-      setSearchResults(mockResults);
+
+      for (const query of searchQueries) {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&location=${searchCoords.lat},${searchCoords.lng}&radius=16093&key=${apiKeys.places}`
+        );
+        
+        const data = await response.json();
+        
+        if (data.results) {
+          for (const place of data.results.slice(0, 3)) { // Limit results per query
+            const placeDetails = await getPlaceDetails(place.place_id);
+            const processedPlace = await processPlaceData(place, placeDetails, searchCoords);
+            if (processedPlace) {
+              results.push(processedPlace);
+            }
+          }
+        }
+      }
+
+      // Remove duplicates and sort by distance
+      const uniqueResults = results.filter((place, index, self) => 
+        index === self.findIndex(p => p.id === place.id)
+      );
+
+      setSearchResults(uniqueResults.slice(0, 10)); // Limit to 10 results
     } catch (error) {
       console.error('Error searching workspaces:', error);
     }
+  };
+
+  const getPlaceDetails = async (placeId: string) => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,user_ratings_total,opening_hours,photos,editorial_summary,reviews,types,wheelchair_accessible_entrance&key=${apiKeys.places}`
+      );
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching place details:', error);
+      return null;
+    }
+  };
+
+  const processPlaceData = async (place: any, details: any, userCoords: {lat: number, lng: number}) => {
+    try {
+      const placeResult = details?.result || {};
+      
+      // Calculate distance
+      const distance = calculateDistance(
+        userCoords.lat, userCoords.lng,
+        place.geometry.location.lat, place.geometry.location.lng
+      );
+
+      // Determine place type
+      const types = place.types || [];
+      let placeType = 'hotel'; // default
+      if (types.includes('cafe') || types.includes('coffee_shop') || types.includes('food')) {
+        placeType = 'cafe';
+      } else if (types.includes('library')) {
+        placeType = 'library';
+      }
+
+      // Get opening hours
+      const openingHours = placeResult.opening_hours;
+      const isOpen = openingHours?.open_now || false;
+      const todayHours = openingHours?.periods?.find((period: any) => 
+        period.open?.day === new Date().getDay()
+      );
+      const closingTime = todayHours?.close ? 
+        `${Math.floor(todayHours.close.time / 100)}:${(todayHours.close.time % 100).toString().padStart(2, '0')}` : 
+        'Unknown';
+
+      // Get best photo for workspace
+      const photos = placeResult.photos || [];
+      const coverPhoto = photos.length > 0 ? 
+        `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photos[0].photo_reference}&key=${apiKeys.places}` :
+        '/placeholder.svg';
+
+      // Generate work-friendly summary from reviews
+      const workFriendlySummary = await generateWorkFriendlySummary(placeResult.reviews || []);
+
+      return {
+        id: place.place_id,
+        name: place.name,
+        type: placeType,
+        rating: place.rating || 0,
+        reviewCount: place.user_ratings_total || 0,
+        isOpen,
+        closingTime: isOpen ? closingTime : 'Closed',
+        distance: `${distance.toFixed(1)} mi`,
+        isWheelchairAccessible: placeResult.wheelchair_accessible_entrance || false,
+        description: placeResult.editorial_summary?.overview || place.formatted_address || '',
+        workFriendlySummary,
+        coverPhoto,
+        location: place.geometry.location
+      };
+    } catch (error) {
+      console.error('Error processing place data:', error);
+      return null;
+    }
+  };
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 3959; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const generateWorkFriendlySummary = async (reviews: any[]) => {
+    const workKeywords = ['wifi', 'laptop', 'work', 'study', 'outlets', 'quiet', 'internet', 'charge', 'cowork'];
+    const relevantReviews = reviews.filter(review => 
+      workKeywords.some(keyword => 
+        review.text?.toLowerCase().includes(keyword)
+      )
+    ).slice(0, 3);
+
+    if (relevantReviews.length === 0) {
+      return '✨ A comfortable space for remote work and productivity.';
+    }
+
+    // Simple summary generation based on common themes
+    const mentions = {
+      wifi: relevantReviews.some(r => r.text?.toLowerCase().includes('wifi') || r.text?.toLowerCase().includes('internet')),
+      outlets: relevantReviews.some(r => r.text?.toLowerCase().includes('outlet') || r.text?.toLowerCase().includes('charge')),
+      quiet: relevantReviews.some(r => r.text?.toLowerCase().includes('quiet')),
+      work: relevantReviews.some(r => r.text?.toLowerCase().includes('work') || r.text?.toLowerCase().includes('laptop'))
+    };
+
+    let summary = '✨ ';
+    const features = [];
+    if (mentions.wifi) features.push('reliable WiFi');
+    if (mentions.outlets) features.push('charging outlets');
+    if (mentions.quiet) features.push('quiet atmosphere');
+    if (mentions.work) features.push('laptop-friendly');
+
+    if (features.length > 0) {
+      summary += `Reviews mention ${features.slice(0, 2).join(' and ')} - great for remote work.`;
+    } else {
+      summary += 'A welcoming space that supports productivity and focus.';
+    }
+
+    return summary;
   };
 
   const activeFilterChips = filterChips.filter(chip => filters.has(chip.id));
