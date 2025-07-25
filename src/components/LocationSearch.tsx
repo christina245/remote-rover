@@ -166,7 +166,7 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
         </div>
 
         {/* Filter Label */}
-        <p className="text-foreground font-medium mb-4">I'm looking for:</p>
+        <p className="text-foreground font-medium mb-4 text-sm">I'm looking for:</p>
 
         {/* Filter Chips */}
         <div className="flex flex-wrap justify-center gap-2 max-w-sm">
