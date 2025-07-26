@@ -266,7 +266,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     
     const workKeywords = isCafeOrCoffeeShop 
       ? ['work', 'sit', 'laptop', 'study', 'wifi', 'table', 'seat', 'internet', 'working']
-      : ['work', 'sit', 'laptop', 'study', 'wifi', 'quiet'];
+      : ['work', 'sit', 'laptop', 'study', 'wifi'];
     
     for (const review of reviews) {
       const reviewText = review.text?.toLowerCase() || '';
@@ -315,7 +315,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
           details.price_level === 1 || 
           details.price_level === 2 ||
           details.price_level === 3 ||
-          /\b(motel|inn|budget|economy|motel 6|extended stay|red roof|super 8|days inn|la quinta|econo lodge)\b/i.test(details.name || '')
+          /\b(motel|inn|budget|economy|motel 6|ramada|extended stay|red roof|super 8|days inn|la quinta|econo lodge)\b/i.test(details.name || '')
         );
         
         if (isLowTierHotel) {
