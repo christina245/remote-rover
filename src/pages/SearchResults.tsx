@@ -46,7 +46,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   // Get search params from navigation state or URL params
   const searchParams = new URLSearchParams(location.search);
   const initialLocation = location.state?.searchLocation || searchParams.get('location') || 'San Francisco, CA';
-  const initialFiltersArray = location.state?.selectedFilters || ['wifi', 'outlets'];
+  const initialFiltersParam = searchParams.get('filters');
+  const initialFiltersArray = initialFiltersParam ? initialFiltersParam.split(',') : ['wifi', 'outlets'];
   const initialFilters = new Set(initialFiltersArray);
   
   const [searchLocation, setSearchLocation] = useState(initialLocation);
@@ -489,24 +490,16 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Background Map - 30% of screen */}
-      <div className="h-[30vh] bg-gray-100 relative">
+      {/* Background Map - 50% of screen on mobile */}
+      <div className="h-[50vh] bg-gray-100 relative">
         <SearchResultsMap 
           apiKey={apiKeys.mapsStatic}
           center={mapCenter || userLocation || { lat: 37.7749, lng: -122.4194 }}
           results={searchResults}
         />
         
-        {/* Header with Logo and Search - Overlay on map */}
+        {/* Header with Search - Overlay on map */}
         <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-background/95 backdrop-blur-sm border-b">
-          {/* Logo */}
-          <div className="flex justify-center mb-3">
-            <img 
-              src={remoteRoverLogo} 
-              alt="Remote Rover" 
-              className="h-6 w-auto object-contain"
-            />
-          </div>
           
           {/* Search Bar */}
           <div 
@@ -544,16 +537,16 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       {/* Results List - Fill remaining space */}
       <div className="flex-1 bg-background">
         <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-1 text-sm text-foreground flex-wrap">
+          <div className="flex flex-col gap-4 mb-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-1 text-sm text-foreground">
               <span>
                 {isLoading ? 'Searching...' : `Found ${searchResults.length} work-friendly locations within`}
               </span>
               <Select value={radiusMiles.toString()} onValueChange={(value) => setRadiusMiles(parseInt(value))}>
-                <SelectTrigger className="w-16 h-6 px-1 text-sm font-semibold border-0 shadow-none" style={{ color: '#3E2098' }}>
+                <SelectTrigger className="w-16 h-6 px-1 text-sm font-semibold border-0 shadow-none inline-flex" style={{ color: '#3E2098' }}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background border shadow-md z-50">
                   <SelectItem value="5">5 mi</SelectItem>
                   <SelectItem value="10">10 mi</SelectItem>
                   <SelectItem value="15">15 mi</SelectItem>
@@ -561,16 +554,18 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
                 </SelectContent>
               </Select>
             </div>
-            <Select value={sortBy} onValueChange={(value: 'distance' | 'rating') => setSortBy(value)}>
-              <SelectTrigger className="w-32 px-2">
-                <ArrowUpDown className="w-4 h-4 mr-1" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="distance">Sort by Distance</SelectItem>
-                <SelectItem value="rating">Sort by Rating</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="ml-auto" style={{ marginLeft: '50px' }}>
+              <Select value={sortBy} onValueChange={(value: 'distance' | 'rating') => setSortBy(value)}>
+                <SelectTrigger className="w-32 px-2">
+                  <ArrowUpDown className="w-4 h-4 mr-1" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-md z-50">
+                  <SelectItem value="distance">Sort by Distance</SelectItem>
+                  <SelectItem value="rating">Sort by Rating</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <SearchResultsList results={searchResults} userLocation={userLocation} />
         </div>
