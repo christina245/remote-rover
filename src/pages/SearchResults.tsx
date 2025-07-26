@@ -171,14 +171,14 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       const service = new google.maps.places.PlacesService(map);
 
       // Search for different place types
-      const placeTypes = ['cafe', 'coffee_shop', 'library', 'lodging'];
+      const placeTypes = ['cafe', 'coffee_shop', 'library', 'hotel'];
       const allResults = [];
 
       for (const type of placeTypes) {
         const request = {
           location: new google.maps.LatLng(searchCoords.lat, searchCoords.lng),
           radius: radiusMiles * 1609.34, // Convert miles to meters
-          type: type === 'lodging' ? 'lodging' : type
+          type: type === 'hotel' ? 'hotel' : type
         };
 
         const results = await new Promise<any[]>((resolve) => {
@@ -265,7 +265,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     );
     
     const workKeywords = isCafeOrCoffeeShop 
-      ? ['work', 'sit', 'laptop', 'study', 'wifi', 'quiet', 'table', 'seat', 'internet', 'meeting', 'working']
+      ? ['work', 'sit', 'laptop', 'study', 'wifi', 'table', 'seat', 'internet', 'working']
       : ['work', 'sit', 'laptop', 'study', 'wifi', 'quiet'];
     
     for (const review of reviews) {
@@ -314,7 +314,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         const isLowTierHotel = (
           details.price_level === 1 || 
           details.price_level === 2 ||
-          /\b(motel|inn|budget|economy|extended stay|red roof|super 8|days inn|la quinta|econo lodge)\b/i.test(details.name || '')
+          details.price_level === 3 ||
+          /\b(motel|inn|budget|economy|motel 6|extended stay|red roof|super 8|days inn|la quinta|econo lodge)\b/i.test(details.name || '')
         );
         
         if (isLowTierHotel) {
