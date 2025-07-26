@@ -198,7 +198,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       const nameBasedRequest = {
         location: new google.maps.LatLng(searchCoords.lat, searchCoords.lng),
         radius: radiusMiles * 1609.34,
-        keyword: 'cafe coffee'
+        keyword: 'cafe coffee boba'
       };
 
       const nameBasedResults = await new Promise<any[]>((resolve) => {
