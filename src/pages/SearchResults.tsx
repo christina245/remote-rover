@@ -256,8 +256,32 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     return types.some(type => type.includes('lodging'));
   };
 
+  const isValidPlaceType = (types: string[]) => {
+    // Check if the place has any of our target types
+    const validTypes = ['cafe', 'coffee_shop', 'library', 'lodging'];
+    const hasValidType = types.some(type => validTypes.includes(type));
+    
+    // Explicitly exclude retail and hardware stores
+    const excludedTypes = [
+      'home_goods_store', 'hardware_store', 'store', 'establishment',
+      'general_contractor', 'home_improvement_store', 'department_store',
+      'furniture_store', 'electronics_store', 'clothing_store'
+    ];
+    const hasExcludedType = types.some(type => excludedTypes.includes(type));
+    
+    console.log(`Place types: ${types.join(', ')} - Valid: ${hasValidType}, Excluded: ${hasExcludedType}`);
+    
+    return hasValidType && !hasExcludedType;
+  };
+
   const hasWorkReviews = (reviews: any[], placeTypes: string[]) => {
     console.log(`Checking reviews for place: ${reviews.length} total reviews, types: ${placeTypes.join(', ')}`);
+    
+    // First check if this is a valid place type
+    if (!isValidPlaceType(placeTypes)) {
+      console.log('Excluding place - invalid type');
+      return false;
+    }
     
     // For cafes and coffee shops, be more lenient with keywords
     const isCafeOrCoffeeShop = placeTypes.some(type => 
