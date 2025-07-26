@@ -217,7 +217,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
             });
           });
 
-          if (details && details.reviews && hasWorkReviews(details.reviews)) {
+          if (details && details.reviews && hasWorkReviews(details.reviews, details.types || [])) {
             const processedPlace = await processPlaceData(place, details, searchCoords);
             if (processedPlace && matchesSelectedFilters(processedPlace, details)) {
               processedResults.push(processedPlace);
@@ -252,10 +252,21 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     }
   };
 
-  const hasWorkReviews = (reviews: any[]) => {
-    console.log(`Checking reviews for place: ${reviews.length} total reviews`);
+  const isHotel = (types: string[]) => {
+    return types.some(type => type.includes('lodging'));
+  };
+
+  const hasWorkReviews = (reviews: any[], placeTypes: string[]) => {
+    console.log(`Checking reviews for place: ${reviews.length} total reviews, types: ${placeTypes.join(', ')}`);
     
-    const workKeywords = ['work', 'sit', 'laptop', 'study', 'wifi', 'quiet'];
+    // For cafes and coffee shops, be more lenient with keywords
+    const isCafeOrCoffeeShop = placeTypes.some(type => 
+      type.includes('cafe') || type.includes('coffee_shop') || type.includes('meal_takeaway')
+    );
+    
+    const workKeywords = isCafeOrCoffeeShop 
+      ? ['work', 'sit', 'laptop', 'study', 'wifi', 'quiet', 'table', 'seat', 'internet', 'meeting', 'working']
+      : ['work', 'sit', 'laptop', 'study', 'wifi', 'quiet'];
     
     for (const review of reviews) {
       const reviewText = review.text?.toLowerCase() || '';
@@ -290,6 +301,27 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         userCoords.lat, userCoords.lng,
         place.geometry.location.lat(), place.geometry.location.lng()
       );
+
+      // Check if place is work-friendly based on reviews
+      if (!hasWorkReviews(details.reviews || [], details.types || [])) {
+        console.log(`Skipping ${details.name} - no work-related reviews`);
+        return null;
+      }
+
+      // For hotels, check if they are work-friendly and exclude low-tier hotels
+      if (isHotel(details.types || [])) {
+        // Exclude low-tier hotels (1-3 star) based on price level or name indicators
+        const isLowTierHotel = (
+          details.price_level === 1 || 
+          details.price_level === 2 ||
+          /\b(motel|inn|budget|economy|extended stay|red roof|super 8|days inn|la quinta|econo lodge)\b/i.test(details.name || '')
+        );
+        
+        if (isLowTierHotel) {
+          console.log(`Skipping low-tier hotel ${details.name}`);
+          return null;
+        }
+      }
 
       // Determine place type
       const types = place.types || [];
@@ -596,8 +628,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       {/* Results List - Fill remaining space */}
       <div className="flex-1 bg-background">
         <div className="p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-            <div className="flex flex-wrap items-center gap-1 text-sm text-foreground flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-4 mb-4 min-h-[40px]">
+            <div className="flex items-center gap-1 text-sm text-foreground flex-1 min-w-0">
               <span className="flex-shrink-0">
                 {isLoading ? 'Searching...' : `Found ${searchResults.length} work-friendly locations within`}
               </span>
@@ -613,7 +645,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex-shrink-0 mt-2 sm:mt-0">
+            <div className="flex-shrink-0 ml-4">
               <Select value={sortBy} onValueChange={(value: 'distance' | 'rating') => setSortBy(value)}>
                 <SelectTrigger className="w-32 px-2">
                   <ArrowUpDown className="w-4 h-4 mr-1" />
