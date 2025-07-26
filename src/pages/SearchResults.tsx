@@ -263,7 +263,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     
     // Explicitly exclude retail and hardware stores
     const excludedTypes = [
-      'home_goods_store', 'hardware_store', 'store', 'establishment',
+      'home_goods_store', 'hardware_store', 'store',
       'general_contractor', 'home_improvement_store', 'department_store',
       'furniture_store', 'electronics_store', 'clothing_store'
     ];
@@ -654,8 +654,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       <div className="flex-1 bg-background">
         <div className="p-6">
           <div className="flex items-center justify-between gap-4 mb-4 min-h-[40px]">
-            <div className="flex items-center gap-1 text-sm text-foreground flex-1 min-w-0">
-              <span className="flex-shrink-0">
+            <div className="flex items-center gap-1 text-sm text-foreground flex-1 min-w-0 md:max-w-[300px]">
+              <span className="leading-relaxed">
                 {isLoading ? 'Searching...' : `Found ${searchResults.length} work-friendly locations within`}
               </span>
               <Select value={radiusMiles.toString()} onValueChange={(value) => setRadiusMiles(parseInt(value))}>
@@ -683,7 +683,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
               </Select>
             </div>
           </div>
-          <SearchResultsList results={searchResults} userLocation={userLocation} />
+          <SearchResultsList results={searchResults} userLocation={userLocation} isLoading={isLoading} />
         </div>
       </div>
     </div>

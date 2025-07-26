@@ -20,13 +20,15 @@ interface SearchResult {
 interface SearchResultsListProps {
   results: SearchResult[];
   userLocation: { lat: number; lng: number } | null;
+  isLoading?: boolean;
 }
 
 export const SearchResultsList: React.FC<SearchResultsListProps> = ({ 
   results, 
-  userLocation 
+  userLocation,
+  isLoading = false
 }) => {
-  if (results.length === 0) {
+  if (results.length === 0 && !isLoading) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         No workspaces found. Try adjusting your filters.
