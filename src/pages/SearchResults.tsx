@@ -218,9 +218,11 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
 
           if (details && details.reviews && hasWorkReviews(details.reviews)) {
             const processedPlace = await processPlaceData(place, details, searchCoords);
-            if (processedPlace) {
+            if (processedPlace && matchesSelectedFilters(processedPlace, details)) {
               processedResults.push(processedPlace);
               console.log(`Added ${place.name} to results`);
+            } else {
+              console.log(`Filtered out ${place.name} - doesn't match selected filters`);
             }
           } else {
             console.log(`Filtered out ${place.name} - no work reviews`);
@@ -362,6 +364,91 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     return R * c;
   };
 
+  const matchesSelectedFilters = (place: any, details: any) => {
+    const reviews = details.reviews || [];
+    const allText = reviews.map((r: any) => r.text?.toLowerCase() || '').join(' ');
+    const placeName = place.name?.toLowerCase() || '';
+    const placeTypes = details.types || [];
+    
+    // Check each selected filter
+    for (const filterId of filters) {
+      switch (filterId) {
+        case 'pet-friendly':
+          const petKeywords = ['dog allowed', 'pet friendly', 'pets allowed', 'dogs welcome', 'cat friendly', 'bring your dog'];
+          if (!petKeywords.some(keyword => allText.includes(keyword))) {
+            return false;
+          }
+          break;
+          
+        case 'quiet':
+          // Include all libraries by default
+          if (placeTypes.includes('library')) {
+            break;
+          }
+          // Check for quiet mentions
+          const quietKeywords = ['quiet', 'peaceful', 'calm', 'silent', 'low noise'];
+          const loudKeywords = ['loud', 'noisy', 'very loud here'];
+          const quietMentions = quietKeywords.filter(keyword => allText.includes(keyword)).length;
+          const loudMentions = loudKeywords.filter(keyword => allText.includes(keyword)).length;
+          if (quietMentions === 0 || loudMentions > 1) {
+            return false;
+          }
+          break;
+          
+        case 'transit':
+          // This would require additional API call to check transit stops
+          // For now, assume places in dense urban areas meet this criteria
+          // You could enhance this with Google Places API transit data
+          break;
+          
+        case 'boba':
+          const bobaKeywords = ['boba', 'milk tea', 'bubble tea', 'taiwanese tea', 'matcha latte'];
+          if (!placeTypes.includes('cafe') && !placeTypes.includes('coffee_shop')) {
+            return false;
+          }
+          if (!bobaKeywords.some(keyword => allText.includes(keyword) || placeName.includes(keyword))) {
+            return false;
+          }
+          break;
+          
+        case 'food':
+          const foodKeywords = ['food', 'menu', 'sandwich', 'salad', 'restaurant', 'kitchen', 'breakfast', 'lunch', 'dinner'];
+          const hasRestaurant = placeTypes.includes('restaurant') || placeTypes.includes('meal_takeaway');
+          const isHotelWithFood = placeTypes.includes('lodging') && foodKeywords.some(keyword => allText.includes(keyword));
+          const isCafeWithFood = (placeTypes.includes('cafe') || placeTypes.includes('coffee_shop')) && 
+                                 foodKeywords.some(keyword => allText.includes(keyword));
+          
+          if (!hasRestaurant && !isHotelWithFood && !isCafeWithFood) {
+            return false;
+          }
+          break;
+          
+        case 'late':
+          const openingHours = details.opening_hours;
+          if (!openingHours) return false;
+          
+          // Check if open 24 hours
+          const is24Hours = openingHours.periods?.some((period: any) => 
+            !period.close || (period.open?.time === '0000' && !period.close.time)
+          );
+          
+          if (is24Hours) break;
+          
+          // Check if open later than 9 PM (21:00)
+          const todayPeriod = openingHours.periods?.find((period: any) => 
+            period.open?.day === new Date().getDay()
+          );
+          
+          if (!todayPeriod?.close || todayPeriod.close.time < '2100') {
+            return false;
+          }
+          break;
+      }
+    }
+    
+    return true;
+  };
+
   const generateWorkFriendlySummary = (reviews: any[]) => {
     const workKeywords = ['wifi', 'laptop', 'work', 'study', 'outlets', 'quiet', 'internet', 'charge', 'cowork'];
     const relevantReviews = reviews.filter(review => 
@@ -412,6 +499,15 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         
         {/* Header with Logo and Search - Overlay on map */}
         <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-background/95 backdrop-blur-sm border-b">
+          {/* Logo */}
+          <div className="flex justify-center mb-3">
+            <img 
+              src={remoteRoverLogo} 
+              alt="Remote Rover" 
+              className="h-6 w-auto object-contain"
+            />
+          </div>
+          
           {/* Search Bar */}
           <div 
             className="p-3 rounded-lg mb-4"
