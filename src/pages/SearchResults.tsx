@@ -499,7 +499,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         />
         
         {/* Header with Search - Overlay on map */}
-        <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-background/95 backdrop-blur-sm border-b">
+        <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-background/25 backdrop-blur-sm border-b">
           
           {/* Search Bar */}
           <div 
