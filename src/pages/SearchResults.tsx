@@ -194,12 +194,42 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         allResults.push(...results);
       }
 
-      console.log(`Found ${allResults.length} total places`);
+      // Additional search for places with "cafe" or "coffee" in their names
+      const nameBasedRequest = {
+        location: new google.maps.LatLng(searchCoords.lat, searchCoords.lng),
+        radius: radiusMiles * 1609.34,
+        keyword: 'cafe coffee'
+      };
+
+      const nameBasedResults = await new Promise<any[]>((resolve) => {
+        service.nearbySearch(nameBasedRequest, (results, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK) {
+            resolve(results || []);
+          } else {
+            resolve([]);
+          }
+        });
+      });
+
+      // Filter name-based results to only include places with "cafe" or "coffee" in the name
+      const filteredNameBasedResults = nameBasedResults.filter(place => {
+        const nameLower = place.name?.toLowerCase() || '';
+        return nameLower.includes('cafe') || nameLower.includes('coffee');
+      });
+
+      allResults.push(...filteredNameBasedResults);
+
+      // Remove duplicates based on place_id
+      const uniqueResults = allResults.filter((place, index, arr) => 
+        arr.findIndex(p => p.place_id === place.place_id) === index
+      );
+
+      console.log(`Found ${uniqueResults.length} unique places after deduplication`);
       
       // Process each place and filter by review content
       const processedResults = [];
       
-      for (const place of allResults) {
+      for (const place of uniqueResults) {
         try {
           console.log(`Processing place: ${place.name}`);
           
@@ -217,7 +247,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
             });
           });
 
-          if (details && details.reviews && hasWorkReviews(details.reviews, details.types || [])) {
+          if (details && details.reviews && hasWorkReviews(details.reviews, details.types || [], place.name)) {
             const processedPlace = await processPlaceData(place, details, searchCoords);
             if (processedPlace && matchesSelectedFilters(processedPlace, details)) {
               processedResults.push(processedPlace);
@@ -274,10 +304,27 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     return hasValidType && !hasExcludedType;
   };
 
-  const hasWorkReviews = (reviews: any[], placeTypes: string[]) => {
+  const hasWorkReviews = (reviews: any[], placeTypes: string[], placeName?: string) => {
     console.log(`Checking reviews for place: ${reviews.length} total reviews, types: ${placeTypes.join(', ')}`);
     
-    // First check if this is a valid place type
+    // Check if this is a name-based cafe detection (cafe/coffee in the name)
+    const isNameBasedCafe = placeName && 
+      (placeName.toLowerCase().includes('cafe') || placeName.toLowerCase().includes('coffee'));
+    
+    // For name-based cafes, only require "wifi" in reviews
+    if (isNameBasedCafe) {
+      for (const review of reviews) {
+        const reviewText = review.text?.toLowerCase() || '';
+        if (reviewText.includes('wifi')) {
+          console.log(`Found wifi mention in name-based cafe "${placeName}":`, reviewText.slice(0, 100));
+          return true;
+        }
+      }
+      console.log(`Name-based cafe "${placeName}" - no wifi mentions found`);
+      return false;
+    }
+    
+    // First check if this is a valid place type for non-name-based results
     if (!isValidPlaceType(placeTypes)) {
       console.log('Excluding place - invalid type');
       return false;
@@ -327,7 +374,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       );
 
       // Check if place is work-friendly based on reviews
-      if (!hasWorkReviews(details.reviews || [], details.types || [])) {
+      if (!hasWorkReviews(details.reviews || [], details.types || [], place.name)) {
         console.log(`Skipping ${details.name} - no work-related reviews`);
         return null;
       }
