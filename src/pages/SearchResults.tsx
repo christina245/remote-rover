@@ -171,7 +171,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       const service = new google.maps.places.PlacesService(map);
 
       // Search for different place types
-      const placeTypes = ['cafe', 'library', 'lodging'];
+      const placeTypes = ['cafe', 'coffee_shop', 'library', 'lodging'];
       const allResults = [];
 
       for (const type of placeTypes) {
@@ -255,11 +255,15 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   const hasWorkReviews = (reviews: any[]) => {
     console.log(`Checking reviews for place: ${reviews.length} total reviews`);
     
+    const workKeywords = ['work', 'sit', 'laptop', 'study', 'wifi', 'quiet'];
+    
     for (const review of reviews) {
       const reviewText = review.text?.toLowerCase() || '';
-      if (reviewText.includes('work')) {
-        console.log('Found work-related review:', reviewText.slice(0, 100));
-        return true;
+      for (const keyword of workKeywords) {
+        if (reviewText.includes(keyword)) {
+          console.log(`Found work-related review with keyword "${keyword}":`, reviewText.slice(0, 100));
+          return true;
+        }
       }
     }
     
@@ -592,9 +596,9 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       {/* Results List - Fill remaining space */}
       <div className="flex-1 bg-background">
         <div className="p-6">
-          <div className="flex items-center justify-between gap-4 mb-4">
-            <div className="flex items-center gap-1 text-sm text-foreground flex-1 min-w-0">
-              <span className="whitespace-nowrap">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <div className="flex flex-wrap items-center gap-1 text-sm text-foreground flex-1 min-w-0">
+              <span className="flex-shrink-0">
                 {isLoading ? 'Searching...' : `Found ${searchResults.length} work-friendly locations within`}
               </span>
               <Select value={radiusMiles.toString()} onValueChange={(value) => setRadiusMiles(parseInt(value))}>
@@ -609,7 +613,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex-shrink-0 ml-[50px]">
+            <div className="flex-shrink-0 mt-2 sm:mt-0">
               <Select value={sortBy} onValueChange={(value: 'distance' | 'rating') => setSortBy(value)}>
                 <SelectTrigger className="w-32 px-2">
                   <ArrowUpDown className="w-4 h-4 mr-1" />
