@@ -331,19 +331,25 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       }
 
       // Generate work-friendly summary from reviews
-      const workFriendlySummary = generateWorkFriendlySummary(details.reviews || []);
+      const workFriendlySummary = generateWorkFriendlySummary(details.reviews || [], filters);
+
+      // Remove country from address
+      let cleanAddress = details.formatted_address || '';
+      if (cleanAddress.includes(', USA') || cleanAddress.includes(', United States')) {
+        cleanAddress = cleanAddress.replace(/, USA$/, '').replace(/, United States$/, '');
+      }
 
       return {
         id: place.place_id,
         name: place.name,
         type: placeType,
-        rating: place.rating || 0,
+        rating: parseFloat((place.rating || 0).toFixed(1)),
         reviewCount: place.user_ratings_total || 0,
         isOpen,
         closingTime,
         distance: distance.toFixed(1),
         isWheelchairAccessible: details.wheelchair_accessible_entrance || false,
-        description: details.formatted_address || '',
+        description: cleanAddress,
         workFriendlySummary,
         coverPhoto,
         location: { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() }
@@ -450,7 +456,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     return true;
   };
 
-  const generateWorkFriendlySummary = (reviews: any[]) => {
+  const generateWorkFriendlySummary = (reviews: any[], selectedFilters: Set<string>) => {
     const workKeywords = ['wifi', 'laptop', 'work', 'study', 'outlets', 'quiet', 'internet', 'charge', 'cowork'];
     const relevantReviews = reviews.filter(review => 
       workKeywords.some(keyword => 
@@ -462,25 +468,74 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       return '✨ A comfortable space for remote work and productivity.';
     }
 
-    // Simple summary generation based on common themes
-    const mentions = {
+    // Generate filter-specific mentions from reviews
+    const filterMentions = {
+      boba: relevantReviews.some(r => 
+        ['boba', 'milk tea', 'bubble tea', 'taiwanese tea', 'matcha latte'].some(keyword => 
+          r.text?.toLowerCase().includes(keyword)
+        )
+      ),
+      'pet-friendly': relevantReviews.some(r => 
+        ['dog allowed', 'pet friendly', 'pets allowed', 'dogs welcome', 'cat friendly', 'bring your dog'].some(keyword => 
+          r.text?.toLowerCase().includes(keyword)
+        )
+      ),
+      quiet: relevantReviews.some(r => r.text?.toLowerCase().includes('quiet')),
+      food: relevantReviews.some(r => 
+        ['food', 'menu', 'sandwich', 'salad', 'breakfast', 'lunch', 'dinner'].some(keyword => 
+          r.text?.toLowerCase().includes(keyword)
+        )
+      ),
       wifi: relevantReviews.some(r => r.text?.toLowerCase().includes('wifi') || r.text?.toLowerCase().includes('internet')),
       outlets: relevantReviews.some(r => r.text?.toLowerCase().includes('outlet') || r.text?.toLowerCase().includes('charge')),
-      quiet: relevantReviews.some(r => r.text?.toLowerCase().includes('quiet')),
-      work: relevantReviews.some(r => r.text?.toLowerCase().includes('work') || r.text?.toLowerCase().includes('laptop'))
+      late: relevantReviews.some(r => 
+        ['open late', 'late night', '24 hour', 'midnight'].some(keyword => 
+          r.text?.toLowerCase().includes(keyword)
+        )
+      )
     };
 
-    let summary = '✨ ';
+    let summary = '✨ Reviews mention ';
     const features = [];
-    if (mentions.wifi) features.push('reliable WiFi');
-    if (mentions.outlets) features.push('charging outlets');
-    if (mentions.quiet) features.push('quiet atmosphere');
-    if (mentions.work) features.push('laptop-friendly');
+    
+    // Prioritize features based on selected filters
+    for (const filter of selectedFilters) {
+      switch (filter) {
+        case 'boba':
+          if (filterMentions.boba) features.push('excellent milk tea selection');
+          break;
+        case 'pet-friendly':
+          if (filterMentions['pet-friendly']) features.push('pet-friendly environment');
+          break;
+        case 'quiet':
+          if (filterMentions.quiet) features.push('quiet atmosphere');
+          break;
+        case 'food':
+          if (filterMentions.food) features.push('good food options');
+          break;
+        case 'wifi':
+          if (filterMentions.wifi) features.push('reliable WiFi');
+          break;
+        case 'outlets':
+          if (filterMentions.outlets) features.push('charging outlets');
+          break;
+        case 'late':
+          if (filterMentions.late) features.push('late hours');
+          break;
+      }
+    }
+
+    // Add general work features if no filter-specific ones found
+    if (features.length === 0) {
+      if (filterMentions.wifi) features.push('reliable WiFi');
+      if (filterMentions.outlets) features.push('charging outlets');
+      if (filterMentions.quiet) features.push('quiet atmosphere');
+    }
 
     if (features.length > 0) {
-      summary += `Reviews mention ${features.slice(0, 2).join(' and ')} - great for remote work.`;
+      summary += `${features.slice(0, 2).join(' and ')} - perfect for remote work.`;
     } else {
-      summary += 'A welcoming space that supports productivity and focus.';
+      summary += 'a welcoming space that supports productivity and focus.';
     }
 
     return summary;
@@ -537,9 +592,9 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       {/* Results List - Fill remaining space */}
       <div className="flex-1 bg-background">
         <div className="p-6">
-          <div className="flex flex-col gap-4 mb-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-1 text-sm text-foreground">
-              <span>
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div className="flex items-center gap-1 text-sm text-foreground flex-1 min-w-0">
+              <span className="whitespace-nowrap">
                 {isLoading ? 'Searching...' : `Found ${searchResults.length} work-friendly locations within`}
               </span>
               <Select value={radiusMiles.toString()} onValueChange={(value) => setRadiusMiles(parseInt(value))}>
@@ -554,7 +609,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="ml-auto" style={{ marginLeft: '50px' }}>
+            <div className="flex-shrink-0 ml-[50px]">
               <Select value={sortBy} onValueChange={(value: 'distance' | 'rating') => setSortBy(value)}>
                 <SelectTrigger className="w-32 px-2">
                   <ArrowUpDown className="w-4 h-4 mr-1" />
