@@ -198,7 +198,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       const nameBasedRequest = {
         location: new google.maps.LatLng(searchCoords.lat, searchCoords.lng),
         radius: radiusMiles * 1609.34,
-        keyword: 'cafe coffee boba milk tea'
+        keyword: 'cafe coffee boba milk tea bubble tea tea'
       };
 
       const nameBasedResults = await new Promise<any[]>((resolve) => {
@@ -311,16 +311,24 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     const isNameBasedCafe = placeName && 
       (placeName.toLowerCase().includes('cafe') || placeName.toLowerCase().includes('coffee'));
     
-    // For name-based cafes, only require "wifi" in reviews
-    if (isNameBasedCafe) {
+    // Check for milk tea/boba places in reviews even if not in name
+    const hasMilkTeaInReviews = reviews.some(review => {
+      const reviewText = review.text?.toLowerCase() || '';
+      return reviewText.includes('milk tea') || reviewText.includes('boba') || reviewText.includes('bubble tea');
+    });
+    
+    // For name-based cafes or places with milk tea mentions, only require "wifi" in reviews
+    if (isNameBasedCafe || hasMilkTeaInReviews) {
       for (const review of reviews) {
         const reviewText = review.text?.toLowerCase() || '';
         if (reviewText.includes('wifi')) {
-          console.log(`Found wifi mention in name-based cafe "${placeName}":`, reviewText.slice(0, 100));
+          const type = isNameBasedCafe ? 'name-based cafe' : 'milk tea place';
+          console.log(`Found wifi mention in ${type} "${placeName}":`, reviewText.slice(0, 100));
           return true;
         }
       }
-      console.log(`Name-based cafe "${placeName}" - no wifi mentions found`);
+      const type = isNameBasedCafe ? 'name-based cafe' : 'milk tea place';
+      console.log(`${type} "${placeName}" - no wifi mentions found`);
       return false;
     }
     
