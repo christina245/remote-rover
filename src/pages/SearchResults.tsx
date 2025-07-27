@@ -198,7 +198,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       const nameBasedRequest = {
         location: new google.maps.LatLng(searchCoords.lat, searchCoords.lng),
         radius: radiusMiles * 1609.34,
-        keyword: 'cafe coffee boba'
+        keyword: 'cafe coffee boba milk tea'
       };
 
       const nameBasedResults = await new Promise<any[]>((resolve) => {
@@ -517,7 +517,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
           break;
           
         case 'boba':
-          const bobaKeywords = ['boba', 'milk tea', 'bubble tea', 'taiwanese tea', 'matcha latte'];
+          const bobaKeywords = ['boba', 'milk tea', 'bubble tea', 'taiwanese tea', 'pearl tea'];
           if (!placeTypes.includes('cafe') && !placeTypes.includes('coffee_shop')) {
             return false;
           }
