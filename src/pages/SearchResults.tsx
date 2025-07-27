@@ -288,7 +288,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
 
   const isValidPlaceType = (types: string[]) => {
     // Check if the place has any of our target types
-    const validTypes = ['cafe', 'coffee_shop', 'library', 'lodging'];
+    const validTypes = ['cafe', 'coffee_shop', 'library', 'lodging', 'restaurant'];
     const hasValidType = types.some(type => validTypes.includes(type));
     
     // Explicitly exclude retail and hardware stores
@@ -344,8 +344,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     );
     
     const workKeywords = isCafeOrCoffeeShop 
-      ? ['work', 'sit', 'laptop', 'wifi', 'table', 'seating']
-      : ['work', 'sit', 'laptop', 'wifi'];
+      ? ['work', 'sit', 'laptop', 'study', 'wifi', 'table', 'seat', 'internet', 'working']
+      : ['work', 'sit', 'laptop', 'study', 'wifi'];
     
     for (const review of reviews) {
       const reviewText = review.text?.toLowerCase() || '';
