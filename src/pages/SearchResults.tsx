@@ -295,7 +295,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     const excludedTypes = [
       'home_goods_store', 'hardware_store', 'store',
       'general_contractor', 'home_improvement_store', 'department_store',
-      'furniture_store', 'electronics_store', 'clothing_store', 'restaurant', 'grocery_store'
+      'furniture_store', 'electronics_store', 'clothing_store', 'grocery_store'
     ];
     const hasExcludedType = types.some(type => excludedTypes.includes(type));
     
