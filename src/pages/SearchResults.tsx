@@ -170,8 +170,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       const map = new google.maps.Map(document.createElement('div'));
       const service = new google.maps.places.PlacesService(map);
 
-      // Search for different place types including additional types that might classify coffee shops
-      const placeTypes = ['cafe', 'coffee_shop', 'library', 'hotel', 'bakery', 'meal_takeaway', 'restaurant'];
+      // Search for different place types
+      const placeTypes = ['cafe', 'coffee_shop', 'library', 'hotel'];
       const allResults = [];
 
       for (const type of placeTypes) {
@@ -287,51 +287,21 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   };
 
   const isValidPlaceType = (types: string[]) => {
-    if (!types || types.length === 0) return false;
-    
-    const primaryType = types[0]; // First type is the primary classification
-    const secondaryTypes = types.slice(1);
-    
-    console.log(`Primary type: ${primaryType}, Secondary types: ${secondaryTypes.join(', ')}`);
+    // Check if the place has any of our target types
+    const validTypes = ['cafe', 'coffee_shop', 'library', 'lodging'];
+    const hasValidType = types.some(type => validTypes.includes(type));
     
     // Explicitly exclude retail and hardware stores
     const excludedTypes = [
-      'home_goods_store', 'hardware_store', 'store',
+      'home_goods_store', 'hardware_store', 
       'general_contractor', 'home_improvement_store', 'department_store',
       'furniture_store', 'electronics_store', 'clothing_store', 'grocery_store'
     ];
     const hasExcludedType = types.some(type => excludedTypes.includes(type));
     
-    if (hasExcludedType) {
-      console.log(`Excluded due to retail/hardware store type: ${types.join(', ')}`);
-      return false;
-    }
+    console.log(`Place types: ${types.join(', ')} - Valid: ${hasValidType}, Excluded: ${hasExcludedType}`);
     
-    // Primary types that are always accepted (true coffee shops/cafes/work spaces)
-    const primaryWorkSpaceTypes = ['cafe', 'coffee_shop', 'library', 'lodging'];
-    if (primaryWorkSpaceTypes.includes(primaryType)) {
-      console.log(`Accepted - primary type is work-friendly: ${primaryType}`);
-      return true;
-    }
-    
-    // Secondary acceptance: bakery, restaurant, meal_takeaway can be accepted 
-    // but ONLY if they also have cafe or coffee_shop as a secondary type
-    const conditionalPrimaryTypes = ['bakery', 'meal_takeaway', 'restaurant'];
-    if (conditionalPrimaryTypes.includes(primaryType)) {
-      const hasCoffeeSecondary = secondaryTypes.some(type => 
-        type === 'cafe' || type === 'coffee_shop'
-      );
-      if (hasCoffeeSecondary) {
-        console.log(`Accepted - ${primaryType} with coffee/cafe secondary type`);
-        return true;
-      } else {
-        console.log(`Rejected - ${primaryType} without coffee/cafe secondary type`);
-        return false;
-      }
-    }
-    
-    console.log(`Rejected - primary type not work-friendly: ${primaryType}`);
-    return false;
+    return hasValidType && !hasExcludedType;
   };
 
   const hasWorkReviews = (reviews: any[], placeTypes: string[], placeName?: string) => {
@@ -370,12 +340,12 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     
     // For cafes and coffee shops, be more lenient with keywords
     const isCafeOrCoffeeShop = placeTypes.some(type => 
-      type.includes('cafe') || type.includes('coffee_shop') || type.includes('meal_takeaway')
+      type.includes('cafe') || type.includes('coffee_shop') || type.includes('restaurant')
     );
     
     const workKeywords = isCafeOrCoffeeShop 
-      ? ['work', 'sit', 'laptop', 'study', 'wifi', 'table', 'seat', 'internet', 'working']
-      : ['work', 'sit', 'laptop', 'study', 'wifi'];
+      ? ['work', 'sit', 'laptop', 'wifi', 'table', 'seat', 'working']
+      : ['work', 'sit', 'laptop', 'wifi'];
     
     for (const review of reviews) {
       const reviewText = review.text?.toLowerCase() || '';
@@ -555,7 +525,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
           break;
           
         case 'boba':
-          const bobaKeywords = ['boba', 'milk tea', 'bubble tea', 'taiwanese tea', 'pearl tea'];
+          const bobaKeywords = ['boba', 'milk tea', 'bubble tea', 'thai tea', 'pearl tea'];
           if (!placeTypes.includes('cafe') && !placeTypes.includes('coffee_shop')) {
             return false;
           }
