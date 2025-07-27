@@ -78,7 +78,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     if (userLocation && googleMapsLoaded) {
       searchWorkspaces();
     }
-  }, [searchLocation, filters, userLocation, googleMapsLoaded]);
+  }, [searchLocation, filters, userLocation, googleMapsLoaded, radiusMiles]);
 
   useEffect(() => {
     // Sort results when sortBy changes
