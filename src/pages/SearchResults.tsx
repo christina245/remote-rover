@@ -198,7 +198,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       const nameBasedRequest = {
         location: new google.maps.LatLng(searchCoords.lat, searchCoords.lng),
         radius: radiusMiles * 1609.34,
-        keyword: 'cafe coffee boba milk tea bubble tea tea'
+        keyword: 'cafe coffee boba milk tea bubble tea bobaholics'
       };
 
       const nameBasedResults = await new Promise<any[]>((resolve) => {
@@ -288,12 +288,12 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
 
   const isValidPlaceType = (types: string[]) => {
     // Check if the place has any of our target types
-    const validTypes = ['cafe', 'coffee_shop', 'library', 'lodging'];
+    const validTypes = ['cafe', 'coffee_shop', 'tea_house', 'library', 'lodging'];
     const hasValidType = types.some(type => validTypes.includes(type));
     
     // Explicitly exclude retail and hardware stores
     const excludedTypes = [
-      'home_goods_store', 'hardware_store', 
+      'home_goods_store', 'hardware_store', 'convenience_store',
       'general_contractor', 'home_improvement_store', 'department_store',
       'furniture_store', 'electronics_store', 'clothing_store', 'grocery_store'
     ];
@@ -340,12 +340,12 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     
     // For cafes and coffee shops, be more lenient with keywords
     const isCafeOrCoffeeShop = placeTypes.some(type => 
-      type.includes('cafe') || type.includes('coffee_shop') || type.includes('restaurant')
+      type.includes('cafe') || type.includes('coffee_shop') || type.includes('meal_takeaway')
     );
     
     const workKeywords = isCafeOrCoffeeShop 
-      ? ['work', 'sit', 'laptop', 'wifi', 'table', 'seat', 'working']
-      : ['work', 'sit', 'laptop', 'wifi'];
+      ? ['work', 'sit', 'laptop', 'study', 'wifi', 'table', 'seat', 'internet', 'working']
+      : ['work', 'sit', 'laptop', 'study', 'wifi'];
     
     for (const review of reviews) {
       const reviewText = review.text?.toLowerCase() || '';
@@ -525,7 +525,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
           break;
           
         case 'boba':
-          const bobaKeywords = ['boba', 'milk tea', 'bubble tea', 'thai tea', 'pearl tea'];
+          const bobaKeywords = ['boba', 'milk tea', 'bubble tea', 'taiwanese tea', 'pearl tea'];
           if (!placeTypes.includes('cafe') && !placeTypes.includes('coffee_shop')) {
             return false;
           }
