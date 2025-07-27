@@ -170,8 +170,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       const map = new google.maps.Map(document.createElement('div'));
       const service = new google.maps.places.PlacesService(map);
 
-      // Search for different place types
-      const placeTypes = ['cafe', 'coffee_shop', 'library', 'hotel'];
+      // Search for different place types including additional types that might classify coffee shops
+      const placeTypes = ['cafe', 'coffee_shop', 'library', 'hotel', 'bakery', 'meal_takeaway', 'restaurant'];
       const allResults = [];
 
       for (const type of placeTypes) {
@@ -287,9 +287,12 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   };
 
   const isValidPlaceType = (types: string[]) => {
-    // Check if the place has any of our target types
-    const validTypes = ['cafe', 'coffee_shop', 'library', 'lodging', 'restaurant'];
-    const hasValidType = types.some(type => validTypes.includes(type));
+    if (!types || types.length === 0) return false;
+    
+    const primaryType = types[0]; // First type is the primary classification
+    const secondaryTypes = types.slice(1);
+    
+    console.log(`Primary type: ${primaryType}, Secondary types: ${secondaryTypes.join(', ')}`);
     
     // Explicitly exclude retail and hardware stores
     const excludedTypes = [
@@ -299,9 +302,36 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     ];
     const hasExcludedType = types.some(type => excludedTypes.includes(type));
     
-    console.log(`Place types: ${types.join(', ')} - Valid: ${hasValidType}, Excluded: ${hasExcludedType}`);
+    if (hasExcludedType) {
+      console.log(`Excluded due to retail/hardware store type: ${types.join(', ')}`);
+      return false;
+    }
     
-    return hasValidType && !hasExcludedType;
+    // Primary types that are always accepted (true coffee shops/cafes/work spaces)
+    const primaryWorkSpaceTypes = ['cafe', 'coffee_shop', 'library', 'lodging'];
+    if (primaryWorkSpaceTypes.includes(primaryType)) {
+      console.log(`Accepted - primary type is work-friendly: ${primaryType}`);
+      return true;
+    }
+    
+    // Secondary acceptance: bakery, restaurant, meal_takeaway can be accepted 
+    // but ONLY if they also have cafe or coffee_shop as a secondary type
+    const conditionalPrimaryTypes = ['bakery', 'meal_takeaway', 'restaurant'];
+    if (conditionalPrimaryTypes.includes(primaryType)) {
+      const hasCoffeeSecondary = secondaryTypes.some(type => 
+        type === 'cafe' || type === 'coffee_shop'
+      );
+      if (hasCoffeeSecondary) {
+        console.log(`Accepted - ${primaryType} with coffee/cafe secondary type`);
+        return true;
+      } else {
+        console.log(`Rejected - ${primaryType} without coffee/cafe secondary type`);
+        return false;
+      }
+    }
+    
+    console.log(`Rejected - primary type not work-friendly: ${primaryType}`);
+    return false;
   };
 
   const hasWorkReviews = (reviews: any[], placeTypes: string[], placeName?: string) => {
