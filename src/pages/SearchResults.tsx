@@ -170,8 +170,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       const map = new google.maps.Map(document.createElement('div'));
       const service = new google.maps.places.PlacesService(map);
 
-      // Search for different place types
-      const placeTypes = ['cafe', 'coffee_shop', 'library', 'hotel'];
+      // Search for different place types - include additional types for filtering
+      const placeTypes = ['cafe', 'coffee_shop', 'library', 'hotel', 'bakery', 'meal_takeaway', 'restaurant'];
       const allResults = [];
 
       for (const type of placeTypes) {
@@ -287,21 +287,45 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   };
 
   const isValidPlaceType = (types: string[]) => {
-    // Check if the place has any of our target types
-    const validTypes = ['cafe', 'coffee_shop', 'tea_house', 'library', 'lodging'];
-    const hasValidType = types.some(type => validTypes.includes(type));
+    if (!types || types.length === 0) return false;
     
-    // Explicitly exclude retail and hardware stores
-    const excludedTypes = [
-      'home_goods_store', 'hardware_store', 'convenience_store',
-      'general_contractor', 'home_improvement_store', 'department_store',
-      'furniture_store', 'electronics_store', 'clothing_store', 'grocery_store'
-    ];
-    const hasExcludedType = types.some(type => excludedTypes.includes(type));
+    const primaryType = types[0]; // First type is the primary classification
+    const secondaryTypes = types.slice(1);
     
-    console.log(`Place types: ${types.join(', ')} - Valid: ${hasValidType}, Excluded: ${hasExcludedType}`);
+    console.log(`Analyzing types - Primary: "${primaryType}", Secondary: [${secondaryTypes.join(', ')}]`);
     
-    return hasValidType && !hasExcludedType;
+    // Always accept if primary type is cafe, coffee_shop, library, or lodging
+    const primaryAcceptedTypes = ['cafe', 'coffee_shop', 'library', 'lodging'];
+    if (primaryAcceptedTypes.includes(primaryType)) {
+      console.log(`✓ Accepted - Primary type "${primaryType}" is in accepted list`);
+      return true;
+    }
+    
+    // Explicitly reject donut shops, gas stations, convenience stores as primary
+    const primaryRejectedTypes = ['donut_shop', 'gas_station', 'convenience_store', 'grocery_or_supermarket'];
+    if (primaryRejectedTypes.includes(primaryType)) {
+      console.log(`✗ Rejected - Primary type "${primaryType}" is in rejected list`);
+      return false;
+    }
+    
+    // For bakery, meal_takeaway, restaurant as primary - only accept if cafe/coffee_shop is secondary
+    const conditionalPrimaryTypes = ['bakery', 'meal_takeaway', 'restaurant'];
+    if (conditionalPrimaryTypes.includes(primaryType)) {
+      const hasCafeSecondary = secondaryTypes.some(type => 
+        type === 'cafe' || type === 'coffee_shop'
+      );
+      if (hasCafeSecondary) {
+        console.log(`✓ Conditionally accepted - Primary "${primaryType}" has cafe/coffee_shop secondary`);
+        return true;
+      } else {
+        console.log(`✗ Rejected - Primary "${primaryType}" lacks cafe/coffee_shop secondary`);
+        return false;
+      }
+    }
+    
+    // Reject all other primary types
+    console.log(`✗ Rejected - Primary type "${primaryType}" not in any accepted category`);
+    return false;
   };
 
   const hasWorkReviews = (reviews: any[], placeTypes: string[], placeName?: string) => {
@@ -351,6 +375,27 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       const reviewText = review.text?.toLowerCase() || '';
       for (const keyword of workKeywords) {
         if (reviewText.includes(keyword)) {
+          // For "work" keyword, check context to avoid false positives
+          if (keyword === 'work') {
+            const workContext = [
+              'work from', 'good for work', 'place to work', 'work here',
+              'working on', 'work laptop', 'work space', 'work friendly',
+              'remote work', 'work area', 'work environment', 'great place to work'
+            ];
+            const hasWorkContext = workContext.some(context => reviewText.includes(context));
+            if (!hasWorkContext) {
+              // Check if "work" appears in wrong context (like "doesn't work", "hard work", etc.)
+              const badWorkContext = [
+                "doesn't work", "don't work", "not work", "hard work", 
+                "work here" // as in employment
+              ];
+              const hasBadContext = badWorkContext.some(context => reviewText.includes(context));
+              if (hasBadContext) {
+                console.log(`Skipping "work" keyword - found in bad context: ${reviewText.slice(0, 100)}`);
+                continue;
+              }
+            }
+          }
           console.log(`Found work-related review with keyword "${keyword}":`, reviewText.slice(0, 100));
           return true;
         }
