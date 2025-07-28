@@ -309,14 +309,16 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     }
     
     // For bakery, meal_takeaway, restaurant as primary - only accept if cafe/coffee_shop is secondary
+    // AND passes both name-based and review-based checks (Option 3: Combination Approach)
     const conditionalPrimaryTypes = ['bakery', 'meal_takeaway', 'restaurant'];
     if (conditionalPrimaryTypes.includes(primaryType)) {
       const hasCafeSecondary = secondaryTypes.some(type => 
         type === 'cafe' || type === 'coffee_shop'
       );
       if (hasCafeSecondary) {
-        console.log(`✓ Conditionally accepted - Primary "${primaryType}" has cafe/coffee_shop secondary`);
-        return true;
+        // Store for later enhanced review analysis
+        console.log(`⚠️ Conditional check - Primary "${primaryType}" has cafe/coffee_shop secondary, will validate with enhanced checks`);
+        return 'conditional'; // Special return value for enhanced validation
       } else {
         console.log(`✗ Rejected - Primary "${primaryType}" lacks cafe/coffee_shop secondary`);
         return false;
@@ -356,10 +358,43 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       return false;
     }
     
-    // First check if this is a valid place type for non-name-based results
-    if (!isValidPlaceType(placeTypes)) {
+    // Check place type validity - handle conditional case for Option 3
+    const placeTypeResult = isValidPlaceType(placeTypes);
+    
+    if (placeTypeResult === false) {
       console.log('Excluding place - invalid type');
       return false;
+    }
+    
+    // Handle conditional places (restaurants with cafe secondary) - Option 3: Combination Approach
+    if (placeTypeResult === 'conditional') {
+      console.log(`Applying Option 3 enhanced validation for "${placeName}"`);
+      
+      // 1. Name-based filtering: Check if name contains legitimate cafe/coffee terms
+      const validCafeNames = ['coffee', 'cafe', 'espresso', 'latte', 'brew', 'roast', 'bean', 'grind'];
+      const nameHasCafeTerms = placeName && validCafeNames.some(term => 
+        placeName.toLowerCase().includes(term)
+      );
+      
+      if (!nameHasCafeTerms) {
+        console.log(`✗ Conditional rejection - "${placeName}" name doesn't contain legitimate cafe terms`);
+        return false;
+      }
+      
+      // 2. Enhanced review analysis: Require stronger work-friendly evidence
+      const strongWorkKeywords = ['laptop', 'study', 'work from here', 'wifi', 'quiet place to work', 'working on laptop', 'work space', 'good for studying'];
+      const hasStrongWorkEvidence = reviews.some(review => {
+        const reviewText = review.text?.toLowerCase() || '';
+        return strongWorkKeywords.some(keyword => reviewText.includes(keyword));
+      });
+      
+      if (!hasStrongWorkEvidence) {
+        console.log(`✗ Conditional rejection - "${placeName}" lacks strong work-friendly evidence in reviews`);
+        return false;
+      }
+      
+      console.log(`✓ Conditional acceptance - "${placeName}" passed both name and review checks`);
+      // Continue with normal validation below
     }
     
     // For cafes and coffee shops, be more lenient with keywords
