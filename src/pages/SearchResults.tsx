@@ -247,16 +247,24 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
             });
           });
 
-          if (details && details.reviews && hasWorkReviews(details.reviews, details.types || [], place.name)) {
-            const processedPlace = await processPlaceData(place, details, searchCoords);
-            if (processedPlace && matchesSelectedFilters(processedPlace, details)) {
-              processedResults.push(processedPlace);
-              console.log(`Added ${place.name} to results`);
-            } else {
-              console.log(`Filtered out ${place.name} - doesn't match selected filters`);
+          if (details) {
+            // First validate place type before checking work reviews
+            if (!isValidPlaceType(details.types || [])) {
+              console.log(`Filtered out ${place.name} - invalid place type. Types: [${(details.types || []).join(', ')}]`);
+              continue;
             }
-          } else {
-            console.log(`Filtered out ${place.name} - no work reviews`);
+            
+            if (details.reviews && hasWorkReviews(details.reviews, details.types || [], place.name)) {
+              const processedPlace = await processPlaceData(place, details, searchCoords);
+              if (processedPlace && matchesSelectedFilters(processedPlace, details)) {
+                processedResults.push(processedPlace);
+                console.log(`Added ${place.name} to results`);
+              } else {
+                console.log(`Filtered out ${place.name} - doesn't match selected filters`);
+              }
+            } else {
+              console.log(`Filtered out ${place.name} - no work reviews`);
+            }
           }
         } catch (error) {
           console.error('Error processing place:', error);
@@ -301,8 +309,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       return true;
     }
     
-    // Explicitly reject donut shops, gas stations, convenience stores as primary
-    const primaryRejectedTypes = ['donut_shop', 'gas_station', 'indian_restaurant', 'convenience_store', 'grocery_or_supermarket'];
+    // Explicitly reject donut shops, gas stations, convenience stores, golf courses as primary
+    const primaryRejectedTypes = ['donut_shop', 'gas_station', 'indian_restaurant', 'convenience_store', 'grocery_or_supermarket', 'golf_course', 'country_club'];
     if (primaryRejectedTypes.includes(primaryType)) {
       console.log(`✗ Rejected - Primary type "${primaryType}" is in rejected list`);
       return false;
