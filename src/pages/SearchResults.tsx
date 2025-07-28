@@ -436,6 +436,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       if (isHotel(details.types || [])) {
         // Exclude low-tier hotels (1-3 star) based on price level or name indicators
         const isLowTierHotel = (
+          details.price_level === undefined ||
+          details.price_level === null ||
           details.price_level === 0 ||
           details.price_level === 1 || 
           details.price_level === 2 ||
