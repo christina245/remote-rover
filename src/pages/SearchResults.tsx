@@ -434,10 +434,11 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
 
       // For hotels, check if they are work-friendly and exclude low-tier hotels
       if (isHotel(details.types || [])) {
-        // Exclude low-tier hotels (1-3 star) based on price level or name indicators
+        // Log hotel details for debugging
+        console.log(`Processing hotel: ${details.name}, price_level: ${details.price_level}`);
+        
+        // Exclude low-tier hotels (0-3 star) based on explicit price level or name indicators
         const isLowTierHotel = (
-          details.price_level === undefined ||
-          details.price_level === null ||
           details.price_level === 0 ||
           details.price_level === 1 || 
           details.price_level === 2 ||
@@ -446,9 +447,11 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         );
         
         if (isLowTierHotel) {
-          console.log(`Skipping low-tier hotel ${details.name}`);
+          console.log(`Excluding hotel: ${details.name}, reason: price_level ${details.price_level} or budget name pattern`);
           return null;
         }
+        
+        console.log(`Including hotel: ${details.name}, price_level: ${details.price_level}`);
       }
 
       // Determine place type
