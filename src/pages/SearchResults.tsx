@@ -478,8 +478,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
           details.price_level === 1 || 
           details.price_level === 2 ||
           details.price_level === 3 ||
-          details.price_level == null ||
-          /\b(motel|inn|budget|economy|motel 6|ramada|extended stay|red roof|super 8|days inn|la quinta|econo lodge)\b/i.test(details.name || '')
+          /\b(motel|inn|budget|economy|motel 6|hotel elan|courtyard by marriott|the arena|ramada|extended stay|red roof|super 8|days inn|la quinta|econo lodge)\b/i.test(details.name || '')
         );
         
         if (isLowTierHotel) {
