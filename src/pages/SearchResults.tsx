@@ -1073,7 +1073,10 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         />
         
         {/* Map Filter Buttons */}
-        <div className="absolute top-4 left-4 flex flex-wrap gap-2 max-w-xs">
+        <div className="absolute top-4 left-4 flex flex-wrap gap-2 max-w-xs items-center">
+          <span className="text-black font-bold text-xl" style={{ textShadow: '1px 1px 0 white, -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white' }}>
+            Showing:
+          </span>
           {mapFilterButtons.map((button) => {
             const IconComponent = button.icon;
             const isActive = activeMapFilters.has(button.id);

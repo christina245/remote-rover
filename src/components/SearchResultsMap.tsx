@@ -86,7 +86,7 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
       </div>
 
       {/* Beta Banner */}
-      <div className="absolute bottom-4 left-4 right-4 bg-[#1F496B] text-white p-3 rounded-lg text-sm">
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-4/5 bg-[#1F496B] text-white p-3 rounded-lg text-sm">
         😬 Remote Rover is currently in beta, which means unwanted results may show up and desired results may not show up. Please report inappropriate locations.
       </div>
     </div>
