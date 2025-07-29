@@ -378,7 +378,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     }
     
     // Explicitly reject donut shops, gas stations, convenience stores, golf courses as primary
-    const primaryRejectedTypes = ['donut_shop', 'gas_station', 'indian_restaurant', 'convenience_store', 'grocery_or_supermarket', 'golf_course', 'country_club'];
+    const primaryRejectedTypes = ['donut_shop', 'gas_station', 'californian_restaurant', 'american_restaurant', 'gift_shop', 'indian_restaurant', 'convenience_store', 'grocery_or_supermarket', 'golf_course', 'country_club'];
     if (primaryRejectedTypes.includes(primaryType)) {
       console.log(`✗ Rejected - Primary type "${primaryType}" is in rejected list`);
       return false;
