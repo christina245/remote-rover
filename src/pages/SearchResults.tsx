@@ -248,12 +248,21 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
           });
 
           if (details) {
-            // First check: Is this a name-based cafe? (bypass type validation)
+            // First check: Is this a name-based cafe? 
             const isNameBasedCafe = place.name && 
               (place.name.toLowerCase().includes('cafe') || place.name.toLowerCase().includes('coffee'));
             
             if (isNameBasedCafe) {
-              console.log(`Name-based cafe detected: ${place.name} - checking wifi and work-friendly criteria`);
+              // Type safety check: Even for name-based cafes, reject inappropriate primary types
+              const primaryType = details.types?.[0];
+              const primaryRejectedTypes = ['donut_shop', 'gas_station', 'californian_restaurant', 'american_restaurant', 'gift_shop', 'indian_restaurant', 'convenience_store', 'grocery_or_supermarket', 'golf_course', 'country_club'];
+              
+              if (primaryRejectedTypes.includes(primaryType)) {
+                console.log(`✗ Name-based cafe ${place.name} rejected - inappropriate primary type "${primaryType}"`);
+                continue;
+              }
+              
+              console.log(`Name-based cafe detected: ${place.name} (primary type: ${primaryType}) - checking wifi and work-friendly criteria`);
               
               // Enhanced wifi detection with context analysis
               const hasPositiveWifi = details.reviews && details.reviews.some(review => {
