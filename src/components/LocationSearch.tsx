@@ -159,9 +159,9 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
           <h1 className="text-base md:text-5xl font-bold text-black mb-2 font-ibm-plex leading-none">
             Find your next public remote workspace.
           </h1>
-          <p className="text-muted-foreground text-sm md:text-base max-w-sm md:max-w-2xl">
+         <center><p className="text-muted-foreground text-sm md:text-base max-w-sm md:max-w-2xl">
             Remote Rover searches local cafes, hotels, and libraries to find free spaces suited for remote work.
-          </p>
+          </p></center>
         </div>
 
         {/* Search Bar Container */}
