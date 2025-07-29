@@ -350,63 +350,17 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
               
               console.log(`Name-based cafe detected: ${place.name} (primary type: ${primaryType}) - checking wifi and work-friendly criteria`);
               
-              // Enhanced wifi detection with context analysis
-              const hasPositiveWifi = details.reviews && details.reviews.some(review => {
-                const reviewText = review.text?.toLowerCase() || '';
-                
-                // Check for positive wifi mentions
-                const positiveWifiTerms = [
-                  'good wifi', 'free wifi', 'wifi works', 'strong wifi', 'reliable wifi',
-                  'fast wifi', 'great wifi', 'excellent wifi', 'wifi is good', 'decent wifi'
-                ];
-                const hasPositiveWifi = positiveWifiTerms.some(term => reviewText.includes(term));
-                
-                // Check for negative wifi mentions
-                const negativeWifiTerms = [
-                  'no wifi', "wifi doesn't work", "don't have wifi", 'poor wifi', 'slow wifi',
-                  'wifi down', 'bad wifi', 'wifi sucks', 'terrible wifi', 'wifi is bad'
-                ];
-                const hasNegativeWifi = negativeWifiTerms.some(term => reviewText.includes(term));
-                
-                // Only count as positive if we have positive mention and no negative
-                if (hasPositiveWifi && !hasNegativeWifi) {
-                  console.log(`Found positive wifi mention in ${place.name}: ${reviewText.slice(0, 100)}`);
-                  return true;
-                }
-                
-                // If just generic "wifi" mention without negative context, still count it
-                if (reviewText.includes('wifi') && !hasNegativeWifi) {
-                  console.log(`Found neutral wifi mention in ${place.name}: ${reviewText.slice(0, 100)}`);
-                  return true;
-                }
-                
-                return false;
-              });
-              
-              // Check for work-friendly indicators
-              const hasWorkFriendlyIndicators = details.reviews && details.reviews.some(review => {
-                const reviewText = review.text?.toLowerCase() || '';
-                const workTerms = [
-                  'laptop', 'work', 'study', 'quiet', 'tables', 'outlets', 'workspace',
-                  'good for working', 'place to work', 'work from here', 'studying'
-                ];
-                const hasWorkTerm = workTerms.some(term => reviewText.includes(term));
-                if (hasWorkTerm) {
-                  console.log(`Found work-friendly indicator in ${place.name}: ${reviewText.slice(0, 100)}`);
-                }
-                return hasWorkTerm;
-              });
-              
-              if (hasPositiveWifi && hasWorkFriendlyIndicators) {
+              // Use simplified work review check for name-based cafes
+              if (hasWorkReviews(details.reviews || [], details.types || [], place.name)) {
                 const processedPlace = await processPlaceData(place, details, searchCoords);
                 if (processedPlace && matchesSelectedFilters(processedPlace, details)) {
                   processedResults.push(processedPlace);
-                  console.log(`✓ Added name-based cafe ${place.name} to results (has positive wifi + work indicators)`);
+                  console.log(`✓ Added name-based cafe ${place.name} to results`);
                 } else {
                   console.log(`Filtered out ${place.name} - doesn't match selected filters`);
                 }
               } else {
-                console.log(`✗ Filtered out name-based cafe ${place.name} - lacks positive wifi (${hasPositiveWifi}) or work indicators (${hasWorkFriendlyIndicators})`);
+                console.log(`✗ Filtered out name-based cafe ${place.name} - no work reviews found`);
               }
             } else {
               // Second check: Type validation for non-name-based cafes
@@ -708,9 +662,23 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       let coverPhoto = `https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=200&fit=crop`; // Default: people with laptops
       
       if (photos.length > 0) {
-        // Try to find an interior photo by checking multiple photos
-        const photoName = photos.length > 1 ? photos[1].name : photos[0].name;
-        coverPhoto = `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=400&key=${apiKeys.places}`;
+        // Get photo using proper API v1 media endpoint with headers
+        try {
+          const photoName = photos.length > 1 ? photos[1].name : photos[0].name;
+          const photoResponse = await fetch(
+            `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=400`,
+            {
+              headers: {
+                'X-Goog-Api-Key': apiKeys.places
+              }
+            }
+          );
+          if (photoResponse.ok) {
+            coverPhoto = photoResponse.url;
+          }
+        } catch (error) {
+          console.error('Error loading photo:', error);
+        }
       } else {
         // Use different defaults based on place type
         if (placeType === 'cafe') {
