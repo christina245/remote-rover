@@ -20,7 +20,7 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
   results 
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState(13);
+  const [zoom, setZoom] = useState(11);
 
   useEffect(() => {
     if (!mapRef.current) return;

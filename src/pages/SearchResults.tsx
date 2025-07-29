@@ -934,8 +934,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
             {activeFilterChips.map((chip) => (
               <div
                 key={chip.id}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium"
-                style={{ backgroundColor: '#EDE8F5', color: '#3E2098' }}
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium text-white"
+                style={{ backgroundColor: '#3E2098' }}
               >
                 {chip.icon}
                 {chip.label}
@@ -994,7 +994,6 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         
         {/* Map Legend */}
         <div className="absolute top-4 right-4 bg-background/95 backdrop-blur-sm rounded-lg p-3 shadow-lg border">
-          <h4 className="text-sm font-semibold mb-2">Pin Colors</h4>
           <div className="space-y-1 text-xs">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
