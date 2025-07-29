@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Wifi, Zap, Dog, Volume2, CupSoda, Pizza, ClockAlert, Bus } from 'lucide-react';
+import { MapPin, Wifi, Zap, Dog, Volume2, CupSoda, Pizza, ClockAlert, Bus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -150,36 +150,38 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
           <img 
             src={remoteRoverLogo} 
             alt="Remote Rover" 
-            className="h-12 w-auto"
+            className="h-12 w-auto md:h-36"
           />
         </div>
 
         {/* Heading */}
         <div className="text-center mb-6">
-          <h1 className="text-base font-bold text-black mb-2 font-ibm-plex leading-none">
+          <h1 className="text-base md:text-5xl font-bold text-black mb-2 font-ibm-plex leading-none">
             Find your next public remote workspace.
           </h1>
-          <p className="text-muted-foreground text-sm max-w-sm">
+          <p className="text-muted-foreground text-sm md:text-base max-w-sm md:max-w-2xl">
             Remote Rover searches local cafes, hotels, and libraries to find free spaces suited for remote work.
           </p>
         </div>
 
         {/* Search Bar Container */}
-        <div 
-          className="p-3 rounded-lg mb-4 w-[95%]"
-          style={{ backgroundColor: '#AC080B' }}
-        >
-          <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
-            <Input
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Search by city or ZIP"
-              className="w-[100%] pl-10 h-12 bg-background border-0 rounded-lg shadow-none focus-visible:ring-0"
-              disabled={isLoadingLocation}
-            />
-          </div>
+        <div className="relative w-[85%] md:w-[50%] mb-4">
+          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground z-10" size={20} />
+          <Input
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Search by city or ZIP"
+            className="w-full pl-10 pr-12 h-12 bg-background border border-gray-300 rounded-full shadow-inner focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500"
+            disabled={isLoadingLocation}
+          />
+          <button
+            onClick={handleSearch}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+            disabled={isLoadingLocation}
+          >
+            <Search size={20} className="text-muted-foreground" />
+          </button>
         </div>
 
         {/* Filter Label */}
@@ -198,7 +200,7 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ apiKeys }) => {
                   : "text-foreground"
               )}
               style={{
-                backgroundColor: selectedFilters.has(chip.id) ? '#3E2098' : '#F4EDE4'
+                backgroundColor: selectedFilters.has(chip.id) ? '#3E2098' : '#EDE8F5'
               }}
             >
               {chip.icon}
