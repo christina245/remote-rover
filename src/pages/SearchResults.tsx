@@ -525,9 +525,26 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   };
 
   const hasYelpWorkReviews = (reviews: any[], categories: any[], placeName: string) => {
-    if (!reviews || reviews.length === 0) return false;
+    console.log(`\n🔍 Analyzing Yelp business: ${placeName}`);
     
-    console.log(`\n🔍 Analyzing Yelp reviews for: ${placeName}`);
+    // Business name analysis for WiFi and work-related terms
+    const nameAnalysis = analyzeBusinessName(placeName);
+    console.log(`🏪 Business name analysis: ${nameAnalysis.hasWifiTerms ? 'WiFi terms found' : 'No WiFi terms'}, ${nameAnalysis.hasWorkTerms ? 'Work terms found' : 'No work terms'}`);
+    
+    // If business name has WiFi terms, accept it immediately
+    if (nameAnalysis.hasWifiTerms) {
+      console.log(`✅ ACCEPTED via business name WiFi terms`);
+      return true;
+    }
+    
+    // Check reviews if available
+    if (!reviews || reviews.length === 0) {
+      console.log(`📝 No reviews available`);
+      // If name has work terms but no reviews, still reject (need WiFi confirmation)
+      console.log(`❌ REJECTED - no reviews and no WiFi in name`);
+      return false;
+    }
+    
     console.log(`📝 Number of reviews to analyze: ${reviews.length}`);
     
     const workKeywords = [
@@ -571,6 +588,30 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     console.log(`✅ Result: ${hasWifiMention ? 'ACCEPTED' : 'REJECTED'} (requires wifi mention)`);
     
     return hasWifiMention; // Only accept if wifi is specifically mentioned
+  };
+
+  const analyzeBusinessName = (name: string) => {
+    const lowerName = name.toLowerCase();
+    
+    // WiFi-related terms in business names
+    const wifiTerms = [
+      'wifi', 'wi-fi', 'internet', 'cyber', 'net cafe', 'netcafe', 'internet cafe'
+    ];
+    
+    // Work-friendly terms in business names  
+    const workTerms = [
+      'study', 'coworking', 'co-working', 'workspace', 'work space', 
+      'office', 'library', 'reading', 'quiet'
+    ];
+    
+    const hasWifiTerms = wifiTerms.some(term => lowerName.includes(term));
+    const hasWorkTerms = workTerms.some(term => lowerName.includes(term));
+    
+    if (hasWifiTerms || hasWorkTerms) {
+      console.log(`🏪 Business name "${name}" contains: ${hasWifiTerms ? 'WiFi terms' : ''} ${hasWorkTerms ? 'Work terms' : ''}`);
+    }
+    
+    return { hasWifiTerms, hasWorkTerms };
   };
 
   const normalizeYelpResult = (business: any, details: any, reviews: any[], searchCoords: {lat: number, lng: number}) => {
