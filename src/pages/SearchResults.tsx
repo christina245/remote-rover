@@ -253,20 +253,65 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
               (place.name.toLowerCase().includes('cafe') || place.name.toLowerCase().includes('coffee'));
             
             if (isNameBasedCafe) {
-              console.log(`Name-based cafe detected: ${place.name} - checking for wifi only`);
-              if (details.reviews && details.reviews.some(review => {
+              console.log(`Name-based cafe detected: ${place.name} - checking wifi and work-friendly criteria`);
+              
+              // Enhanced wifi detection with context analysis
+              const hasPositiveWifi = details.reviews && details.reviews.some(review => {
                 const reviewText = review.text?.toLowerCase() || '';
-                return reviewText.includes('wifi');
-              })) {
+                
+                // Check for positive wifi mentions
+                const positiveWifiTerms = [
+                  'good wifi', 'free wifi', 'wifi works', 'strong wifi', 'reliable wifi',
+                  'fast wifi', 'great wifi', 'excellent wifi', 'wifi is good', 'decent wifi'
+                ];
+                const hasPositiveWifi = positiveWifiTerms.some(term => reviewText.includes(term));
+                
+                // Check for negative wifi mentions
+                const negativeWifiTerms = [
+                  'no wifi', "wifi doesn't work", "don't have wifi", 'poor wifi', 'slow wifi',
+                  'wifi down', 'bad wifi', 'wifi sucks', 'terrible wifi', 'wifi is bad'
+                ];
+                const hasNegativeWifi = negativeWifiTerms.some(term => reviewText.includes(term));
+                
+                // Only count as positive if we have positive mention and no negative
+                if (hasPositiveWifi && !hasNegativeWifi) {
+                  console.log(`Found positive wifi mention in ${place.name}: ${reviewText.slice(0, 100)}`);
+                  return true;
+                }
+                
+                // If just generic "wifi" mention without negative context, still count it
+                if (reviewText.includes('wifi') && !hasNegativeWifi) {
+                  console.log(`Found neutral wifi mention in ${place.name}: ${reviewText.slice(0, 100)}`);
+                  return true;
+                }
+                
+                return false;
+              });
+              
+              // Check for work-friendly indicators
+              const hasWorkFriendlyIndicators = details.reviews && details.reviews.some(review => {
+                const reviewText = review.text?.toLowerCase() || '';
+                const workTerms = [
+                  'laptop', 'work', 'study', 'quiet', 'tables', 'outlets', 'workspace',
+                  'good for working', 'place to work', 'work from here', 'studying'
+                ];
+                const hasWorkTerm = workTerms.some(term => reviewText.includes(term));
+                if (hasWorkTerm) {
+                  console.log(`Found work-friendly indicator in ${place.name}: ${reviewText.slice(0, 100)}`);
+                }
+                return hasWorkTerm;
+              });
+              
+              if (hasPositiveWifi && hasWorkFriendlyIndicators) {
                 const processedPlace = await processPlaceData(place, details, searchCoords);
                 if (processedPlace && matchesSelectedFilters(processedPlace, details)) {
                   processedResults.push(processedPlace);
-                  console.log(`Added name-based cafe ${place.name} to results`);
+                  console.log(`✓ Added name-based cafe ${place.name} to results (has positive wifi + work indicators)`);
                 } else {
                   console.log(`Filtered out ${place.name} - doesn't match selected filters`);
                 }
               } else {
-                console.log(`Filtered out name-based cafe ${place.name} - no wifi mentions`);
+                console.log(`✗ Filtered out name-based cafe ${place.name} - lacks positive wifi (${hasPositiveWifi}) or work indicators (${hasWorkFriendlyIndicators})`);
               }
             } else {
               // Second check: Type validation for non-name-based cafes
