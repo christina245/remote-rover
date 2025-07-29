@@ -903,42 +903,39 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   const activeFilterChips = filterChips.filter(chip => filters.has(chip.id));
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Background Map - 50% of screen on mobile */}
-      <div className="h-[50vh] bg-gray-100 relative">
-        <SearchResultsMap 
-          apiKey={apiKeys.mapsStatic}
-          center={mapCenter || userLocation || { lat: 37.7749, lng: -122.4194 }}
-          results={searchResults}
-        />
-        
-        {/* Header with Search - Overlay on map */}
-        <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-background/20 backdrop-blur-sm">
-          
-          {/* Search Bar */}
-          <div 
-            className="p-3 rounded-lg mb-4"
-            style={{ backgroundColor: '#AC080B' }}
-          >
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
-              <Input
-                value={searchLocation}
-                onChange={(e) => setSearchLocation(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Search by city or ZIP"
-                className="w-full pl-10 h-10 bg-background border-0 rounded-lg shadow-none focus-visible:ring-0"
-              />
-            </div>
+    <div className="min-h-screen flex">
+      {/* Left Sidebar - Results Panel */}
+      <div className="w-full md:w-[35%] flex flex-col bg-background border-r">
+        {/* Search Bar */}
+        <div className="p-4 border-b">
+          <div className="relative">
+            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground z-10" size={20} />
+            <Input
+              value={searchLocation}
+              onChange={(e) => setSearchLocation(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Search by city or ZIP"
+              className="w-full pl-10 pr-12 h-12 rounded-3xl border-0 shadow-inner bg-background focus-visible:ring-0"
+              style={{ 
+                boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.1)',
+                maxWidth: window.innerWidth < 768 ? '85%' : '100%'
+              }}
+            />
+            <button
+              onClick={handleSearch}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-10"
+            >
+              🔍
+            </button>
           </div>
 
           {/* Selected Filter Tags */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mt-3">
             {activeFilterChips.map((chip) => (
               <div
                 key={chip.id}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium text-white"
-                style={{ backgroundColor: '#3E2098' }}
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium"
+                style={{ backgroundColor: '#EDE8F5', color: '#3E2098' }}
               >
                 {chip.icon}
                 {chip.label}
@@ -946,18 +943,16 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
             ))}
           </div>
         </div>
-      </div>
 
-      {/* Results List - Fill remaining space */}
-      <div className="flex-1 bg-background">
-        <div className="p-6">
-          <div className="flex items-center justify-between gap-4 mb-4 min-h-[40px]">
-            <div className="flex items-center gap-1 text-sm text-foreground flex-1 min-w-0 md:max-w-[300px]">
-              <span className="leading-relaxed">
-                {isLoading ? 'Searching...' : `Found ${searchResults.length} work-friendly locations within`}
+        {/* Controls */}
+        <div className="p-4 border-b">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-1 text-sm text-foreground flex-1">
+              <span>
+                {isLoading ? 'Searching...' : `Found ${searchResults.length} locations within`}
               </span>
               <Select value={radiusMiles.toString()} onValueChange={(value) => setRadiusMiles(parseInt(value))}>
-                <SelectTrigger className="w-16 h-6 px-1 text-sm font-semibold border-0 shadow-none inline-flex" style={{ color: '#3E2098' }}>
+                <SelectTrigger className="w-16 h-6 px-1 text-sm font-semibold border-0 shadow-none" style={{ color: '#3E2098' }}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-background border shadow-md z-50">
@@ -968,20 +963,60 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex-shrink-0 ml-4">
-              <Select value={sortBy} onValueChange={(value: 'distance' | 'rating') => setSortBy(value)}>
-                <SelectTrigger className="w-32 px-2">
-                  <ArrowUpDown className="w-4 h-4 mr-1" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-background border shadow-md z-50">
-                  <SelectItem value="distance">Sort by Distance</SelectItem>
-                  <SelectItem value="rating">Sort by Rating</SelectItem>
-                </SelectContent>
-              </Select>
+            <Select value={sortBy} onValueChange={(value: 'distance' | 'rating') => setSortBy(value)}>
+              <SelectTrigger className="w-32 px-2">
+                <ArrowUpDown className="w-4 h-4 mr-1" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-background border shadow-md z-50">
+                <SelectItem value="distance">Sort by Distance</SelectItem>
+                <SelectItem value="rating">Sort by Rating</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Results List */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
+            <SearchResultsList results={searchResults} userLocation={userLocation} isLoading={isLoading} />
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Map */}
+      <div className="hidden md:flex md:flex-1 relative">
+        <SearchResultsMap 
+          apiKey={apiKeys.mapsStatic}
+          center={mapCenter || userLocation || { lat: 37.7749, lng: -122.4194 }}
+          results={searchResults}
+        />
+        
+        {/* Map Legend */}
+        <div className="absolute top-4 right-4 bg-background/95 backdrop-blur-sm rounded-lg p-3 shadow-lg border">
+          <h4 className="text-sm font-semibold mb-2">Pin Colors</h4>
+          <div className="space-y-1 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+              <span>Cafes</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span>Libraries</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <span>Hotels</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+              <span>Food Courts</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#EDE8F5' }}></div>
+              <span>Other</span>
             </div>
           </div>
-          <SearchResultsList results={searchResults} userLocation={userLocation} isLoading={isLoading} />
         </div>
       </div>
     </div>
