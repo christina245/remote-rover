@@ -605,9 +605,36 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   const getPlaceDetails = async (placeId: string) => {
     try {
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,user_ratings_total,opening_hours,photos,editorial_summary,reviews,types,wheelchair_accessible_entrance&key=${apiKeys.places}`
+        `https://places.googleapis.com/v1/places/${placeId}`,
+        {
+          headers: {
+            'X-Goog-Api-Key': apiKeys.places,
+            'X-Goog-FieldMask': 'id,displayName,rating,userRatingCount,currentOpeningHours,photos,editorialSummary,reviews,types,accessibilityOptions'
+          }
+        }
       );
-      return await response.json();
+      const data = await response.json();
+      
+      // Transform new API response to match legacy format for compatibility
+      if (data) {
+        return {
+          result: {
+            name: data.displayName?.text || '',
+            rating: data.rating || 0,
+            user_ratings_total: data.userRatingCount || 0,
+            opening_hours: data.currentOpeningHours ? {
+              open_now: data.currentOpeningHours.openNow,
+              periods: data.currentOpeningHours.periods
+            } : null,
+            photos: data.photos || [],
+            editorial_summary: data.editorialSummary,
+            reviews: data.reviews || [],
+            types: data.types || [],
+            wheelchair_accessible_entrance: data.accessibilityOptions?.wheelchairAccessibleEntrance
+          }
+        };
+      }
+      return null;
     } catch (error) {
       console.error('Error fetching place details:', error);
       return null;
@@ -682,8 +709,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       
       if (photos.length > 0) {
         // Try to find an interior photo by checking multiple photos
-        const photoRef = photos.length > 1 ? photos[1].photo_reference : photos[0].photo_reference;
-        coverPhoto = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoRef}&key=${apiKeys.places}`;
+        const photoName = photos.length > 1 ? photos[1].name : photos[0].name;
+        coverPhoto = `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=400&key=${apiKeys.places}`;
       } else {
         // Use different defaults based on place type
         if (placeType === 'cafe') {
