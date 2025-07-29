@@ -326,14 +326,14 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     console.log(`Analyzing types - Primary: "${primaryType}", Secondary: [${secondaryTypes.join(', ')}]`);
     
     // Always accept if primary type is cafe, coffee_shop, library, or lodging
-    const primaryAcceptedTypes = ['cafe', 'coffee_shop', 'library', 'lodging'];
+    const primaryAcceptedTypes = ['cafe', 'coffee_shop', 'library', 'food court', 'lodging'];
     if (primaryAcceptedTypes.includes(primaryType)) {
       console.log(`✓ Accepted - Primary type "${primaryType}" is in accepted list`);
       return true;
     }
     
     // Explicitly reject donut shops, gas stations, convenience stores, golf courses as primary
-    const primaryRejectedTypes = ['donut_shop', 'gas_station', 'indian_restaurant', 'convenience_store', 'grocery_or_supermarket', 'golf_course', 'country_club'];
+    const primaryRejectedTypes = ['donut_shop', 'gas_station', 'indian_restaurant', 'restaurant', 'convenience_store', 'grocery_or_supermarket', 'golf_course', 'country_club'];
     if (primaryRejectedTypes.includes(primaryType)) {
       console.log(`✗ Rejected - Primary type "${primaryType}" is in rejected list`);
       return false;
@@ -341,7 +341,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     
     // For bakery, meal_takeaway, restaurant as primary - only accept if cafe/coffee_shop is secondary
     // AND passes both name-based and review-based checks (Option 3: Combination Approach)
-    const conditionalPrimaryTypes = ['bakery', 'meal_takeaway', 'restaurant'];
+    const conditionalPrimaryTypes = ['bakery', 'meal_takeaway'];
     if (conditionalPrimaryTypes.includes(primaryType)) {
       const hasCafeSecondary = secondaryTypes.some(type => 
         type === 'cafe' || type === 'coffee_shop'
