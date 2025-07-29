@@ -248,22 +248,45 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
           });
 
           if (details) {
-            // First validate place type before checking work reviews
-            if (!isValidPlaceType(details.types || [])) {
-              console.log(`Filtered out ${place.name} - invalid place type. Types: [${(details.types || []).join(', ')}]`);
-              continue;
-            }
+            // First check: Is this a name-based cafe? (bypass type validation)
+            const isNameBasedCafe = place.name && 
+              (place.name.toLowerCase().includes('cafe') || place.name.toLowerCase().includes('coffee'));
             
-            if (details.reviews && hasWorkReviews(details.reviews, details.types || [], place.name)) {
-              const processedPlace = await processPlaceData(place, details, searchCoords);
-              if (processedPlace && matchesSelectedFilters(processedPlace, details)) {
-                processedResults.push(processedPlace);
-                console.log(`Added ${place.name} to results`);
+            if (isNameBasedCafe) {
+              console.log(`Name-based cafe detected: ${place.name} - checking for wifi only`);
+              if (details.reviews && details.reviews.some(review => {
+                const reviewText = review.text?.toLowerCase() || '';
+                return reviewText.includes('wifi');
+              })) {
+                const processedPlace = await processPlaceData(place, details, searchCoords);
+                if (processedPlace && matchesSelectedFilters(processedPlace, details)) {
+                  processedResults.push(processedPlace);
+                  console.log(`Added name-based cafe ${place.name} to results`);
+                } else {
+                  console.log(`Filtered out ${place.name} - doesn't match selected filters`);
+                }
               } else {
-                console.log(`Filtered out ${place.name} - doesn't match selected filters`);
+                console.log(`Filtered out name-based cafe ${place.name} - no wifi mentions`);
               }
             } else {
-              console.log(`Filtered out ${place.name} - no work reviews`);
+              // Second check: Type validation for non-name-based cafes
+              if (!isValidPlaceType(details.types || [])) {
+                console.log(`Filtered out ${place.name} - invalid place type. Types: [${(details.types || []).join(', ')}]`);
+                continue;
+              }
+              
+              // Third check: Work reviews for type-validated places
+              if (details.reviews && hasWorkReviews(details.reviews, details.types || [], place.name)) {
+                const processedPlace = await processPlaceData(place, details, searchCoords);
+                if (processedPlace && matchesSelectedFilters(processedPlace, details)) {
+                  processedResults.push(processedPlace);
+                  console.log(`Added ${place.name} to results`);
+                } else {
+                  console.log(`Filtered out ${place.name} - doesn't match selected filters`);
+                }
+              } else {
+                console.log(`Filtered out ${place.name} - no work reviews`);
+              }
             }
           }
         } catch (error) {
@@ -341,9 +364,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   const hasWorkReviews = (reviews: any[], placeTypes: string[], placeName?: string) => {
     console.log(`Checking reviews for place: ${reviews.length} total reviews, types: ${placeTypes.join(', ')}`);
     
-    // Check if this is a name-based cafe detection (cafe/coffee in the name)
-    const isNameBasedCafe = placeName && 
-      (placeName.toLowerCase().includes('cafe') || placeName.toLowerCase().includes('coffee'));
+    // Note: Name-based cafe detection is now handled upstream, so this function
+    // only processes places that have already passed type validation
     
     // Check for milk tea/boba places in reviews even if not in name
     const hasMilkTeaInReviews = reviews.some(review => {
@@ -351,30 +373,21 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       return reviewText.includes('milk tea') || reviewText.includes('boba') || reviewText.includes('bubble tea');
     });
     
-    // For name-based cafes or places with milk tea mentions, only require "wifi" in reviews
-    if (isNameBasedCafe || hasMilkTeaInReviews) {
+    // For places with milk tea mentions, only require "wifi" in reviews
+    if (hasMilkTeaInReviews) {
       for (const review of reviews) {
         const reviewText = review.text?.toLowerCase() || '';
         if (reviewText.includes('wifi')) {
-          const type = isNameBasedCafe ? 'name-based cafe' : 'milk tea place';
-          console.log(`Found wifi mention in ${type} "${placeName}":`, reviewText.slice(0, 100));
+          console.log(`Found wifi mention in milk tea place "${placeName}":`, reviewText.slice(0, 100));
           return true;
         }
       }
-      const type = isNameBasedCafe ? 'name-based cafe' : 'milk tea place';
-      console.log(`${type} "${placeName}" - no wifi mentions found`);
-      return false;
-    }
-    
-    // Check place type validity - handle conditional case for Option 3
-    const placeTypeResult = isValidPlaceType(placeTypes);
-    
-    if (placeTypeResult === false) {
-      console.log('Excluding place - invalid type');
+      console.log(`Milk tea place "${placeName}" - no wifi mentions found`);
       return false;
     }
     
     // Handle conditional places (restaurants with cafe secondary) - Option 3: Combination Approach
+    const placeTypeResult = isValidPlaceType(placeTypes);
     if (placeTypeResult === 'conditional') {
       console.log(`Applying Option 3 enhanced validation for "${placeName}"`);
       
