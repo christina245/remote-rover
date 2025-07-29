@@ -1083,10 +1083,10 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
                 variant="outline"
                 size="sm"
                 onClick={() => toggleMapFilter(button.id)}
-                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
+                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                   isActive 
                     ? 'text-white border-transparent' 
-                    : 'text-black border-gray-300'
+                    : 'text-black border-none'
                 }`}
                 style={{ 
                   backgroundColor: isActive ? '#3E2098' : '#EDE8F5'

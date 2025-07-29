@@ -22,7 +22,7 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
   activeFilters = new Set(['cafe', 'library', 'hotel', 'food_court', 'other'])
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState(11);
+  const [zoom, setZoom] = useState(13);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -83,6 +83,11 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
         >
           <Minus size={20} />
         </button>
+      </div>
+
+      {/* Beta Banner */}
+      <div className="absolute bottom-4 left-4 right-4 bg-[#1F496B] text-white p-3 rounded-lg text-sm">
+        😬 Remote Rover is currently in beta, which means unwanted results may show up and desired results may not show up. Please report inappropriate locations.
       </div>
     </div>
   );
