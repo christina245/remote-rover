@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { MapPin, Wifi, Zap, Dog, Volume2, CupSoda, Pizza, ClockAlert, Bus, Star, Navigation, Accessibility, ArrowUpDown } from 'lucide-react';
+import { MapPin, Wifi, Zap, Dog, Volume2, CupSoda, Pizza, ClockAlert, Bus, Star, Navigation, Accessibility, ArrowUpDown, Coffee, BookOpen, Hotel, UtensilsCrossed, MapPin as OtherIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -59,6 +59,10 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   const [radiusMiles, setRadiusMiles] = useState<number>(5);
   const [isLoading, setIsLoading] = useState(false);
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [activeMapFilters, setActiveMapFilters] = useState(new Set(['cafe', 'library', 'hotel', 'food_court', 'other']));
+  
+  const RESULTS_PER_PAGE = 10;
 
   useEffect(() => {
     getCurrentLocation();
@@ -902,12 +906,58 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
 
   const activeFilterChips = filterChips.filter(chip => filters.has(chip.id));
 
+  // Filter results based on map filters
+  const filteredResults = searchResults.filter(result => {
+    if (result.type === 'cafe') return activeMapFilters.has('cafe');
+    if (result.type === 'library') return activeMapFilters.has('library');
+    if (result.type === 'hotel') return activeMapFilters.has('hotel');
+    if (result.type === 'food_court') return activeMapFilters.has('food_court');
+    return activeMapFilters.has('other');
+  });
+
+  // Filter map results for display
+  const filteredMapResults = searchResults.filter(result => {
+    if (result.type === 'cafe') return activeMapFilters.has('cafe');
+    if (result.type === 'library') return activeMapFilters.has('library');
+    if (result.type === 'hotel') return activeMapFilters.has('hotel');
+    if (result.type === 'food_court') return activeMapFilters.has('food_court');
+    return activeMapFilters.has('other');
+  });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredResults.length / RESULTS_PER_PAGE);
+  const startIndex = (currentPage - 1) * RESULTS_PER_PAGE;
+  const paginatedResults = filteredResults.slice(startIndex, startIndex + RESULTS_PER_PAGE);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeMapFilters, searchResults]);
+
+  const toggleMapFilter = (filterType: string) => {
+    const newFilters = new Set(activeMapFilters);
+    if (newFilters.has(filterType)) {
+      newFilters.delete(filterType);
+    } else {
+      newFilters.add(filterType);
+    }
+    setActiveMapFilters(newFilters);
+  };
+
+  const mapFilterButtons = [
+    { id: 'cafe', label: 'Cafes', icon: Coffee },
+    { id: 'library', label: 'Libraries', icon: BookOpen },
+    { id: 'hotel', label: 'Hotels', icon: Hotel },
+    { id: 'food_court', label: 'Food Courts', icon: UtensilsCrossed },
+    { id: 'other', label: 'Other', icon: OtherIcon }
+  ];
+
   return (
     <div className="min-h-screen flex">
       {/* Left Sidebar - Results Panel */}
-      <div className="w-full md:w-[35%] flex flex-col bg-background border-r">
-        {/* Search Bar */}
-        <div className="p-4 border-b">
+      <div className="w-full md:w-[35%] flex flex-col bg-background border-r h-screen">
+        {/* Search Bar - Fixed */}
+        <div className="p-4 border-b flex-shrink-0">
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground z-10" size={20} />
             <Input
@@ -944,12 +994,12 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
           </div>
         </div>
 
-        {/* Controls */}
-        <div className="p-4 border-b">
+        {/* Controls - Fixed */}
+        <div className="p-4 border-b flex-shrink-0">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-1 text-sm text-foreground flex-1">
               <span>
-                {isLoading ? 'Searching...' : `Found ${searchResults.length} locations within`}
+                {isLoading ? 'Searching...' : `Found ${filteredResults.length} locations within`}
               </span>
               <Select value={radiusMiles.toString()} onValueChange={(value) => setRadiusMiles(parseInt(value))}>
                 <SelectTrigger className="w-16 h-6 px-1 text-sm font-semibold border-0 shadow-none" style={{ color: '#3E2098' }}>
@@ -976,22 +1026,79 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
           </div>
         </div>
 
-        {/* Results List */}
+        {/* Results List - Scrollable */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-4">
-            <SearchResultsList results={searchResults} userLocation={userLocation} isLoading={isLoading} />
+            <SearchResultsList results={paginatedResults} userLocation={userLocation} isLoading={isLoading} />
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="w-8 h-8 p-0"
+                >
+                  <ChevronLeft size={16} />
+                </Button>
+                
+                <span className="text-sm text-muted-foreground px-2">
+                  Page {currentPage} of {totalPages}
+                </span>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="w-8 h-8 p-0"
+                >
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Right Side - Map */}
-      <div className="hidden md:flex md:flex-1 relative">
+      {/* Right Side - Map - Fixed */}
+      <div className="hidden md:flex md:flex-1 relative h-screen">
         <SearchResultsMap 
           apiKey={apiKeys.mapsStatic}
           center={mapCenter || userLocation || { lat: 37.7749, lng: -122.4194 }}
-          results={searchResults}
+          results={filteredMapResults}
+          activeFilters={activeMapFilters}
         />
         
+        {/* Map Filter Buttons */}
+        <div className="absolute top-4 left-4 flex flex-wrap gap-2 max-w-xs">
+          {mapFilterButtons.map((button) => {
+            const IconComponent = button.icon;
+            const isActive = activeMapFilters.has(button.id);
+            return (
+              <Button
+                key={button.id}
+                variant="outline"
+                size="sm"
+                onClick={() => toggleMapFilter(button.id)}
+                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
+                  isActive 
+                    ? 'text-white border-transparent' 
+                    : 'text-black border-gray-300'
+                }`}
+                style={{ 
+                  backgroundColor: isActive ? '#3E2098' : '#EDE8F5'
+                }}
+              >
+                <IconComponent size={14} />
+                {button.label}
+              </Button>
+            );
+          })}
+        </div>
+
         {/* Map Legend */}
         <div className="absolute top-4 right-4 bg-background/95 backdrop-blur-sm rounded-lg p-3 shadow-lg border">
           <div className="space-y-1 text-xs">

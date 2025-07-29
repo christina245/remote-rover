@@ -12,12 +12,14 @@ interface SearchResultsMapProps {
   apiKey: string;
   center: { lat: number; lng: number };
   results: MapResult[];
+  activeFilters?: Set<string>;
 }
 
 export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({ 
   apiKey, 
   center, 
-  results 
+  results,
+  activeFilters = new Set(['cafe', 'library', 'hotel', 'food_court', 'other'])
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(11);
