@@ -511,7 +511,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       }
 
       // Determine place type
-      const types = place.types || [];
+      const types = details.types || [];
       let placeType = 'hotel'; // default
       if (types.includes('cafe') || types.includes('coffee_shop') || types.includes('bakery')) {
         placeType = 'cafe';
