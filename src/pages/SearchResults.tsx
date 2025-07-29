@@ -152,6 +152,9 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
 
       // Convert location string to coordinates if needed
       let searchCoords = userLocation;
+      console.log(`🔍 Starting search for location: "${searchLocation}"`);
+      console.log(`📍 Initial coordinates:`, searchCoords);
+      
       if (searchLocation !== 'San Francisco, CA') {
         const geocodeResponse = await fetch(
           `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchLocation)}&key=${apiKeys.geocoding}`
@@ -160,6 +163,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         if (geocodeData.results?.[0]) {
           const { lat, lng } = geocodeData.results[0].geometry.location;
           searchCoords = { lat, lng };
+          console.log(`📍 Geocoded coordinates:`, searchCoords);
         }
       }
 
@@ -170,54 +174,132 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       const map = new google.maps.Map(document.createElement('div'));
       const service = new google.maps.places.PlacesService(map);
 
-      // Search for different place types - include additional types for filtering
+      // Search for different place types with comprehensive logging
       const placeTypes = ['cafe', 'coffee_shop', 'library', 'hotel', 'bakery', 'meal_takeaway', 'restaurant'];
       const allResults = [];
+      
+      console.log(`🎯 Search radius: ${radiusMiles} miles (${radiusMiles * 1609.34} meters)`);
 
-      for (const type of placeTypes) {
-        const request = {
+      // Try multiple radii to ensure we don't miss places
+      const searchRadii = [radiusMiles, radiusMiles * 1.5, radiusMiles * 2];
+      
+      for (const currentRadius of searchRadii) {
+        console.log(`\n🔄 Searching with radius: ${currentRadius} miles`);
+        
+        for (const type of placeTypes) {
+          const request = {
+            location: new google.maps.LatLng(searchCoords.lat, searchCoords.lng),
+            radius: currentRadius * 1609.34, // Convert miles to meters
+            type: type === 'hotel' ? 'hotel' : type
+          };
+
+          const results = await new Promise<any[]>((resolve) => {
+            service.nearbySearch(request, (results, status) => {
+              if (status === google.maps.places.PlacesServiceStatus.OK) {
+                console.log(`✅ ${type}: Found ${results?.length || 0} places`);
+                // Log place names for debugging
+                results?.forEach(place => {
+                  if (place.name?.toLowerCase().includes('capital one')) {
+                    console.log(`🎯 FOUND CAPITAL ONE: ${place.name} (type: ${type})`);
+                  }
+                });
+                resolve(results || []);
+              } else {
+                console.log(`❌ ${type}: Search failed with status ${status}`);
+                resolve([]);
+              }
+            });
+          });
+
+          allResults.push(...results);
+        }
+
+        // Additional search for places with "cafe" or "coffee" in their names
+        const nameBasedRequest = {
           location: new google.maps.LatLng(searchCoords.lat, searchCoords.lng),
-          radius: radiusMiles * 1609.34, // Convert miles to meters
-          type: type === 'hotel' ? 'hotel' : type
+          radius: currentRadius * 1609.34,
+          keyword: 'cafe coffee boba milk tea bubble tea bobaholics'
         };
 
-        const results = await new Promise<any[]>((resolve) => {
-          service.nearbySearch(request, (results, status) => {
+        const nameBasedResults = await new Promise<any[]>((resolve) => {
+          service.nearbySearch(nameBasedRequest, (results, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK) {
+              console.log(`✅ Keyword search: Found ${results?.length || 0} places`);
+              results?.forEach(place => {
+                if (place.name?.toLowerCase().includes('capital one')) {
+                  console.log(`🎯 FOUND CAPITAL ONE (keyword): ${place.name}`);
+                }
+              });
               resolve(results || []);
             } else {
+              console.log(`❌ Keyword search failed with status ${status}`);
               resolve([]);
             }
           });
         });
 
-        allResults.push(...results);
+        // Filter name-based results to only include places with "cafe" or "coffee" in the name
+        const filteredNameBasedResults = nameBasedResults.filter(place => {
+          const nameLower = place.name?.toLowerCase() || '';
+          return nameLower.includes('cafe') || nameLower.includes('coffee');
+        });
+
+        allResults.push(...filteredNameBasedResults);
+        
+        // Break early if we found enough results
+        if (allResults.length > 50) break;
       }
 
-      // Additional search for places with "cafe" or "coffee" in their names
-      const nameBasedRequest = {
-        location: new google.maps.LatLng(searchCoords.lat, searchCoords.lng),
-        radius: radiusMiles * 1609.34,
-        keyword: 'cafe coffee boba milk tea bubble tea bobaholics'
-      };
+      // Add comprehensive logging to see what Google returns
+      console.log(`\n📊 Search Summary:`);
+      console.log(`- Total results before deduplication: ${allResults.length}`);
+      console.log(`- Search coordinates: ${searchCoords.lat}, ${searchCoords.lng}`);
+      console.log(`- Location: ${searchLocation}`);
+      
+      // Log all place names to see if Capital One Cafe appears anywhere
+      const allPlaceNames = allResults.map(place => place.name).filter(Boolean);
+      console.log(`\n📋 All place names found:`, allPlaceNames);
+      
+      // Specifically look for Capital One in results
+      const capitalOneResults = allResults.filter(place => 
+        place.name?.toLowerCase().includes('capital one')
+      );
+      
+      if (capitalOneResults.length > 0) {
+        console.log(`🎯 Found ${capitalOneResults.length} Capital One locations:`, 
+          capitalOneResults.map(p => p.name));
+      } else {
+        console.log(`❌ No Capital One locations found in any search type`);
+        
+        // Try an additional broad keyword search for "Capital One"
+        console.log(`🔍 Trying broad search for "Capital One"...`);
+        
+        const broadRequest = {
+          location: new google.maps.LatLng(searchCoords.lat, searchCoords.lng),
+          radius: radiusMiles * 3 * 1609.34, // Even larger radius
+          keyword: 'Capital One'
+        };
 
-      const nameBasedResults = await new Promise<any[]>((resolve) => {
-        service.nearbySearch(nameBasedRequest, (results, status) => {
-          if (status === google.maps.places.PlacesServiceStatus.OK) {
-            resolve(results || []);
-          } else {
-            resolve([]);
-          }
+        const broadResults = await new Promise<any[]>((resolve) => {
+          service.nearbySearch(broadRequest, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+              console.log(`✅ Broad "Capital One" search: Found ${results?.length || 0} places`);
+              results?.forEach(place => {
+                console.log(`📍 Broad search found: ${place.name} at distance ${calculateDistance(
+                  searchCoords.lat, searchCoords.lng,
+                  place.geometry.location.lat(), place.geometry.location.lng()
+                ).toFixed(1)} miles`);
+              });
+              resolve(results || []);
+            } else {
+              console.log(`❌ Broad "Capital One" search failed with status ${status}`);
+              resolve([]);
+            }
+          });
         });
-      });
-
-      // Filter name-based results to only include places with "cafe" or "coffee" in the name
-      const filteredNameBasedResults = nameBasedResults.filter(place => {
-        const nameLower = place.name?.toLowerCase() || '';
-        return nameLower.includes('cafe') || nameLower.includes('coffee');
-      });
-
-      allResults.push(...filteredNameBasedResults);
+        
+        allResults.push(...broadResults);
+      }
 
       // Remove duplicates based on place_id
       const uniqueResults = allResults.filter((place, index, arr) => 
