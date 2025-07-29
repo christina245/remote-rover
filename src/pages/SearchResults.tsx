@@ -39,6 +39,21 @@ interface SearchResultsProps {
   selectedFilters?: Set<string>;
 }
 
+// Yelp API credentials
+const YELP_API_KEY = 'Os53shXWu8SJ2nhpjEuWsTCGVoXNLmM_K3R6uyYKT8nfF2LHOZBkOGscGrnOffNdWJCPs6F0zbkN5vD2UimUicEZSmJ7xvOFpDrZenx_WyQwiWKEpAwgc9LUKzqJaHYx';
+const YELP_CLIENT_ID = 'r6_S1b2qXbThKVQ4QdU8ww';
+
+// Yelp category mappings
+const YELP_CATEGORIES = [
+  'coffee', // Coffee & Tea
+  'coffeeroasters', // Coffee Roasteries  
+  'bakeries', // Bakeries
+  'juicebars', // Juice Bars & Smoothies
+  'hotels', // Hotels
+  'bubbletea', // Bubble tea
+  'libraries' // Libraries
+];
+
 export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -388,10 +403,19 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         }
       }
       
-      console.log(`Final results: ${processedResults.length} work-friendly places`);
+      console.log(`Final Google results: ${processedResults.length} work-friendly places`);
+
+      // Search Yelp for additional results
+      console.log(`\n🔍 Searching Yelp for additional workspaces...`);
+      const yelpResults = await searchYelpWorkspaces(searchCoords);
+      console.log(`Found ${yelpResults.length} Yelp results`);
+
+      // Combine and deduplicate Google and Yelp results
+      const combinedResults = deduplicateResults([...processedResults, ...yelpResults]);
+      console.log(`Combined results after deduplication: ${combinedResults.length} places`);
 
       // Sort results by selected criteria
-      const sortedResults = processedResults.sort((a, b) => {
+      const sortedResults = combinedResults.sort((a, b) => {
         if (sortBy === 'distance') {
           return parseFloat(a.distance) - parseFloat(b.distance);
         } else {
@@ -405,6 +429,233 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const searchYelpWorkspaces = async (searchCoords: {lat: number, lng: number}) => {
+    try {
+      const radius = Math.min(radiusMiles * 1609.34, 40000); // Max 40km radius for Yelp
+      const categoriesParam = YELP_CATEGORIES.join(',');
+      
+      const response = await fetch(
+        `https://api.yelp.com/v3/businesses/search?latitude=${searchCoords.lat}&longitude=${searchCoords.lng}&radius=${radius}&categories=${categoriesParam}&limit=50&sort_by=distance`,
+        {
+          headers: {
+            'Authorization': `Bearer ${YELP_API_KEY}`,
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+
+      if (!response.ok) {
+        console.error('Yelp API error:', response.status, response.statusText);
+        return [];
+      }
+
+      const data = await response.json();
+      const businesses = data.businesses || [];
+      
+      console.log(`Yelp returned ${businesses.length} businesses`);
+      
+      const processedYelpResults = [];
+      
+      for (const business of businesses) {
+        try {
+          // Check if business has required categories
+          const hasRequiredCategory = business.categories?.some((cat: any) => 
+            YELP_CATEGORIES.some(yelpCat => cat.alias === yelpCat)
+          );
+          
+          if (!hasRequiredCategory) {
+            console.log(`Skipping ${business.name} - no required categories`);
+            continue;
+          }
+
+          // Get business details for reviews
+          const detailsResponse = await fetch(
+            `https://api.yelp.com/v3/businesses/${business.id}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${YELP_API_KEY}`,
+                'Content-Type': 'application/json',
+              }
+            }
+          );
+
+          if (!detailsResponse.ok) continue;
+          
+          const businessDetails = await detailsResponse.json();
+          
+          // Get reviews
+          const reviewsResponse = await fetch(
+            `https://api.yelp.com/v3/businesses/${business.id}/reviews`,
+            {
+              headers: {
+                'Authorization': `Bearer ${YELP_API_KEY}`,
+                'Content-Type': 'application/json',
+              }
+            }
+          );
+
+          let reviews = [];
+          if (reviewsResponse.ok) {
+            const reviewsData = await reviewsResponse.json();
+            reviews = reviewsData.reviews || [];
+          }
+
+          // Check for work-friendly reviews using our existing logic
+          if (hasYelpWorkReviews(reviews, business.categories || [], business.name)) {
+            const processedPlace = normalizeYelpResult(business, businessDetails, reviews, searchCoords);
+            if (processedPlace && matchesSelectedFilters(processedPlace, { types: business.categories?.map((c: any) => c.alias) || [] })) {
+              processedYelpResults.push(processedPlace);
+              console.log(`✓ Added Yelp result: ${business.name}`);
+            }
+          } else {
+            console.log(`✗ Yelp business ${business.name} filtered out - no wifi reviews`);
+          }
+        } catch (error) {
+          console.error(`Error processing Yelp business ${business.name}:`, error);
+        }
+      }
+      
+      return processedYelpResults;
+    } catch (error) {
+      console.error('Error searching Yelp:', error);
+      return [];
+    }
+  };
+
+  const hasYelpWorkReviews = (reviews: any[], categories: any[], placeName: string) => {
+    if (!reviews || reviews.length === 0) return false;
+    
+    console.log(`\n🔍 Analyzing Yelp reviews for: ${placeName}`);
+    console.log(`📝 Number of reviews to analyze: ${reviews.length}`);
+    
+    const workKeywords = [
+      'wifi', 'internet', 'laptop', 'work', 'study', 'remote', 'office',
+      'productive', 'quiet', 'focus', 'meeting', 'desk', 'table',
+      'charging', 'outlet', 'power', 'computer', 'typing'
+    ];
+    
+    let foundKeywords = new Set();
+    
+    for (const review of reviews) {
+      const reviewText = review.text?.toLowerCase() || '';
+      console.log(`📖 Review excerpt: "${reviewText.substring(0, 100)}..."`);
+      
+      for (const keyword of workKeywords) {
+        if (reviewText.includes(keyword)) {
+          foundKeywords.add(keyword);
+          console.log(`✓ Found keyword: "${keyword}"`);
+          
+          // Special handling for "work" - check context
+          if (keyword === 'work') {
+            const workContexts = ['work from', 'work on', 'work here', 'work space', 'work environment', 'good for work', 'place to work'];
+            const hasGoodWorkContext = workContexts.some(context => reviewText.includes(context));
+            const hasBadWorkContext = reviewText.includes('work there') || reviewText.includes('work in') && reviewText.includes('kitchen');
+            
+            if (hasBadWorkContext && !hasGoodWorkContext) {
+              foundKeywords.delete('work');
+              console.log(`❌ Removed "work" - bad context detected`);
+            }
+          }
+        }
+      }
+    }
+    
+    const hasWifiMention = foundKeywords.has('wifi') || foundKeywords.has('internet');
+    const hasWorkEvidence = foundKeywords.size > 0;
+    
+    console.log(`📊 Keywords found: [${Array.from(foundKeywords).join(', ')}]`);
+    console.log(`📶 Has wifi mention: ${hasWifiMention}`);
+    console.log(`💼 Has work evidence: ${hasWorkEvidence}`);
+    console.log(`✅ Result: ${hasWifiMention ? 'ACCEPTED' : 'REJECTED'} (requires wifi mention)`);
+    
+    return hasWifiMention; // Only accept if wifi is specifically mentioned
+  };
+
+  const normalizeYelpResult = (business: any, details: any, reviews: any[], searchCoords: {lat: number, lng: number}) => {
+    const distance = calculateDistance(
+      searchCoords.lat,
+      searchCoords.lng,
+      business.coordinates.latitude,
+      business.coordinates.longitude
+    );
+
+    // Use the one photo available on base plan
+    const coverPhoto = business.image_url || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&h=200&fit=crop';
+    
+    // Determine business type from categories
+    let businessType = 'cafe';
+    if (business.categories?.some((c: any) => c.alias === 'hotels')) {
+      businessType = 'hotel';
+    } else if (business.categories?.some((c: any) => c.alias === 'libraries')) {
+      businessType = 'library';
+    }
+
+    // Format hours
+    let isOpen = false;
+    let closingTime = 'Unknown';
+    if (details.hours?.[0]?.open) {
+      const now = new Date();
+      const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const currentTime = now.getHours() * 100 + now.getMinutes();
+      
+      const todayHours = details.hours[0].open.find((h: any) => h.day === currentDay);
+      if (todayHours) {
+        const openTime = parseInt(todayHours.start);
+        const closeTime = parseInt(todayHours.end);
+        isOpen = currentTime >= openTime && currentTime <= closeTime;
+        closingTime = `${Math.floor(closeTime / 100)}:${(closeTime % 100).toString().padStart(2, '0')}`;
+      }
+    }
+
+    return {
+      id: `yelp_${business.id}`,
+      name: business.name,
+      type: businessType,
+      rating: business.rating || 0,
+      reviewCount: business.review_count || 0,
+      isOpen,
+      closingTime,
+      distance: `${distance.toFixed(1)} mi`,
+      isWheelchairAccessible: false, // Yelp doesn't provide this info consistently
+      description: business.categories?.map((c: any) => c.title).join(', ') || '',
+      workFriendlySummary: generateWorkFriendlySummary(reviews, filters),
+      coverPhoto,
+      source: 'yelp'
+    };
+  };
+
+  const deduplicateResults = (results: any[]) => {
+    const uniqueResults = [];
+    const seenPlaces = new Set();
+    
+    for (const result of results) {
+      // Create a key for duplicate detection
+      const normalizedName = result.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const distanceNum = parseFloat(result.distance);
+      
+      // Check for duplicates using name similarity and proximity
+      let isDuplicate = false;
+      for (const seen of seenPlaces) {
+        const [seenName, seenDistance] = (seen as string).split('|');
+        const nameSimilarity = normalizedName === seenName;
+        const distanceSimilarity = Math.abs(distanceNum - parseFloat(seenDistance)) < 0.1; // Within 0.1 miles
+        
+        if (nameSimilarity && distanceSimilarity) {
+          isDuplicate = true;
+          console.log(`🔄 Duplicate detected: ${result.name} (${result.distance}) - skipping`);
+          break;
+        }
+      }
+      
+      if (!isDuplicate) {
+        uniqueResults.push(result);
+        seenPlaces.add(`${normalizedName}|${distanceNum}`);
+      }
+    }
+    
+    return uniqueResults;
   };
 
   const isHotel = (types: string[]) => {
@@ -733,7 +984,13 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
     const reviews = details.reviews || [];
     const allText = reviews.map((r: any) => r.text?.toLowerCase() || '').join(' ');
     const placeName = place.name?.toLowerCase() || '';
-    const placeTypes = details.types || [];
+    
+    // Handle both Google and Yelp data structures
+    let placeTypes = details.types || [];
+    if (place.source === 'yelp' && details.types && Array.isArray(details.types)) {
+      // For Yelp, types are category aliases
+      placeTypes = details.types;
+    }
     
     // Check each selected filter
     for (const filterId of filters) {
