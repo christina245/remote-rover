@@ -45,7 +45,7 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
     };
 
     const color = getColor(type);
-    const borderStyle = isSelected ? `stroke="#FFFFFF" stroke-width="3"` : '';
+    const borderStyle = isSelected ? `stroke="#3E2098" stroke-width="3"` : '';
     
     return {
       url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
@@ -79,7 +79,8 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
 
     // Create info window for showing place names
     infoWindowRef.current = new window.google.maps.InfoWindow({
-      pixelOffset: new window.google.maps.Size(0, -40)
+      pixelOffset: new window.google.maps.Size(0, -40),
+      disableAutoPan: false
     });
 
     return () => {
@@ -131,7 +132,7 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
           }
         };
 
-        // Show simple name label
+        // Show simple name label with custom styling
         if (infoWindowRef.current) {
           infoWindowRef.current.setContent(`
             <div style="
@@ -140,10 +141,13 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
               font-weight: 700;
               color: ${getTextColor(result.type)};
               text-shadow: 2px 2px 0 #FFFFFF, -2px -2px 0 #FFFFFF, 2px -2px 0 #FFFFFF, -2px 2px 0 #FFFFFF;
-              padding: 0;
+              padding: 8px 12px;
               margin: 0;
               border: none;
-              background: transparent;
+              background: #FFFFFF;
+              border-radius: 4px;
+              box-shadow: 0 2px 10px rgba(62, 32, 152, 0.3);
+              white-space: nowrap;
             ">
               ${result.name}
             </div>

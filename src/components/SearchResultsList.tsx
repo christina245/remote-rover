@@ -1,6 +1,7 @@
 import React from 'react';
 import { Star, Navigation, Accessibility } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LocationSuggestionBanner } from './LocationSuggestionBanner';
 
 interface SearchResult {
   id: string;
@@ -38,6 +39,7 @@ export const SearchResultsList: React.FC<SearchResultsListProps> = ({
 
   return (
     <div className="space-y-4">
+      <LocationSuggestionBanner />
       {results.map((result) => (
         <div key={result.id} className="bg-background border rounded-lg overflow-hidden shadow-sm">
           {/* Cover Photo */}
