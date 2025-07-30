@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Plus, Minus } from 'lucide-react';
 
 interface MapResult {
   id: string;
@@ -15,6 +14,12 @@ interface SearchResultsMapProps {
   activeFilters?: Set<string>;
 }
 
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
 export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({ 
   apiKey, 
   center, 
@@ -22,43 +27,156 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
   activeFilters = new Set(['cafe', 'library', 'hotel', 'food_court', 'other'])
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState(13);
+  const mapInstanceRef = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
+  const infoWindowRef = useRef<any>(null);
+  const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!mapRef.current) return;
-
-    // Create custom pin markers for different place types
-    const getPinColor = (type: string) => {
+  // Custom marker icons for different place types
+  const getMarkerIcon = (type: string, isSelected: boolean = false) => {
+    const getColor = (type: string) => {
       switch (type) {
-        case 'cafe': return 'blue';
-        case 'library': return 'green';
-        case 'hotel': return 'red';
-        case 'food_court': return 'orange';
-        default: return 'gray'; // Fallback color for unclassified
+        case 'cafe': return '#4285F4'; // Blue
+        case 'library': return '#34A853'; // Green
+        case 'hotel': return '#EA4335'; // Red
+        case 'food_court': return '#FF9800'; // Orange
+        default: return '#9C27B0'; // Purple for 'other'
       }
     };
 
-    // Generate markers string for static map with enhanced pin colors
-    const markers = results.map(result => {
-      const color = getPinColor(result.type);
-      return `color:${color}|${result.location.lat},${result.location.lng}`;
-    }).join('&markers=');
-
-    // Use larger size for better desktop viewing with dynamic zoom
-    const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${center.lat},${center.lng}&zoom=${zoom}&size=800x600&maptype=roadmap&markers=${markers}&key=${apiKey}`;
-
-    mapRef.current.style.backgroundImage = `url(${mapUrl})`;
-    mapRef.current.style.backgroundSize = 'cover';
-    mapRef.current.style.backgroundPosition = 'center';
-  }, [apiKey, center, results, zoom]);
-
-  const handleZoomIn = () => {
-    setZoom(prev => Math.min(prev + 1, 20));
+    const color = getColor(type);
+    const borderStyle = isSelected ? `stroke="#FFFFFF" stroke-width="3"` : '';
+    
+    return {
+      url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+        <svg width="24" height="36" viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 0C5.373 0 0 5.373 0 12c0 9 12 24 12 24s12-15 12-24c0-6.627-5.373-12-12-12z" 
+                fill="${color}" ${borderStyle}/>
+          <circle cx="12" cy="12" r="6" fill="#FFFFFF"/>
+        </svg>
+      `)}`,
+      scaledSize: new window.google.maps.Size(24, 36),
+      anchor: new window.google.maps.Point(12, 36)
+    };
   };
 
-  const handleZoomOut = () => {
-    setZoom(prev => Math.max(prev - 1, 1));
-  };
+  // Initialize Google Map
+  useEffect(() => {
+    if (!mapRef.current || !window.google) return;
+
+    const map = new window.google.maps.Map(mapRef.current, {
+      center: center,
+      zoom: 13,
+      mapTypeId: 'roadmap',
+      styles: [], // Default Google Maps styling
+      zoomControl: true,
+      streetViewControl: false,
+      fullscreenControl: false,
+      mapTypeControl: false
+    });
+
+    mapInstanceRef.current = map;
+
+    // Create info window for showing place names
+    infoWindowRef.current = new window.google.maps.InfoWindow({
+      pixelOffset: new window.google.maps.Size(0, -40)
+    });
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current = null;
+      }
+      if (infoWindowRef.current) {
+        infoWindowRef.current.close();
+        infoWindowRef.current = null;
+      }
+    };
+  }, [center]);
+
+  // Update markers when results or filters change
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+
+    // Clear existing markers
+    markersRef.current.forEach(marker => marker.setMap(null));
+    markersRef.current = [];
+
+    // Filter results based on active filters
+    const filteredResults = results.filter(result => 
+      activeFilters.has(result.type) || activeFilters.has('other')
+    );
+
+    // Create new markers
+    filteredResults.forEach(result => {
+      const marker = new window.google.maps.Marker({
+        position: result.location,
+        map: mapInstanceRef.current,
+        title: result.name,
+        icon: getMarkerIcon(result.type, selectedMarkerId === result.id)
+      });
+
+      // Add click listener
+      marker.addListener('click', () => {
+        // Update selected marker
+        setSelectedMarkerId(result.id);
+        
+        // Get text color based on marker type
+        const getTextColor = (type: string) => {
+          switch (type) {
+            case 'cafe': return '#4285F4';
+            case 'library': return '#34A853';
+            case 'hotel': return '#EA4335';
+            case 'food_court': return '#FF9800';
+            default: return '#9C27B0';
+          }
+        };
+
+        // Show simple name label
+        if (infoWindowRef.current) {
+          infoWindowRef.current.setContent(`
+            <div style="
+              font-family: 'IBM Plex Sans Devanagari', sans-serif;
+              font-size: 14px;
+              font-weight: 700;
+              color: ${getTextColor(result.type)};
+              text-shadow: 2px 2px 0 #FFFFFF, -2px -2px 0 #FFFFFF, 2px -2px 0 #FFFFFF, -2px 2px 0 #FFFFFF;
+              padding: 0;
+              margin: 0;
+              border: none;
+              background: transparent;
+            ">
+              ${result.name}
+            </div>
+          `);
+          infoWindowRef.current.open(mapInstanceRef.current, marker);
+        }
+      });
+
+      markersRef.current.push(marker);
+    });
+
+    // Fit bounds to show all markers
+    if (filteredResults.length > 0) {
+      const bounds = new window.google.maps.LatLngBounds();
+      filteredResults.forEach(result => {
+        bounds.extend(result.location);
+      });
+      mapInstanceRef.current.fitBounds(bounds);
+    }
+  }, [results, activeFilters, selectedMarkerId]);
+
+  // Update selected marker icon when selection changes
+  useEffect(() => {
+    markersRef.current.forEach((marker, index) => {
+      const result = results.filter(r => 
+        activeFilters.has(r.type) || activeFilters.has('other')
+      )[index];
+      
+      if (result) {
+        marker.setIcon(getMarkerIcon(result.type, selectedMarkerId === result.id));
+      }
+    });
+  }, [selectedMarkerId, results, activeFilters]);
 
   return (
     <div className="relative w-full h-full">
@@ -66,24 +184,6 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
         ref={mapRef}
         className="w-full h-full bg-gray-200 rounded-lg"
       />
-      
-      {/* Zoom Controls */}
-      <div className="absolute bottom-4 right-4 flex flex-col bg-background/95 backdrop-blur-sm rounded-lg shadow-lg border overflow-hidden">
-        <button
-          onClick={handleZoomIn}
-          className="p-2 hover:bg-muted transition-colors border-b"
-          disabled={zoom >= 20}
-        >
-          <Plus size={20} />
-        </button>
-        <button
-          onClick={handleZoomOut}
-          className="p-2 hover:bg-muted transition-colors"
-          disabled={zoom <= 1}
-        >
-          <Minus size={20} />
-        </button>
-      </div>
 
       {/* Beta Banner */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-4/5 bg-[#1F496B] text-white p-3 rounded-lg text-sm">
