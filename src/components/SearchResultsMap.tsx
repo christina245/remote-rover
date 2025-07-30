@@ -132,24 +132,43 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
           }
         };
 
-        // Show simple name label with custom styling
+        // Show Google Maps style popup with location info
         if (infoWindowRef.current) {
           infoWindowRef.current.setContent(`
             <div style="
-              font-family: 'IBM Plex Sans Devanagari', sans-serif;
-              font-size: 14px;
-              font-weight: 700;
-              color: ${getTextColor(result.type)};
-              text-shadow: 2px 2px 0 #FFFFFF, -2px -2px 0 #FFFFFF, 2px -2px 0 #FFFFFF, -2px 2px 0 #FFFFFF;
-              padding: 8px 12px;
-              margin: 0;
-              border: none;
+              font-family: 'Roboto', sans-serif;
               background: #FFFFFF;
-              border-radius: 4px;
+              border-radius: 8px;
               box-shadow: 0 2px 10px rgba(62, 32, 152, 0.3);
-              white-space: nowrap;
+              padding: 16px;
+              min-width: 200px;
+              max-width: 300px;
             ">
-              ${result.name}
+              <div style="
+                font-size: 16px;
+                font-weight: 500;
+                color: #202124;
+                margin-bottom: 4px;
+                line-height: 1.2;
+              ">
+                ${result.name}
+              </div>
+              <div style="
+                font-size: 14px;
+                color: #5f6368;
+                margin-bottom: 8px;
+                line-height: 1.3;
+              ">
+                Address information would go here
+              </div>
+              <a href="#" style="
+                font-size: 14px;
+                color: #1a73e8;
+                text-decoration: none;
+                font-weight: 500;
+              ">
+                View on Google Maps
+              </a>
             </div>
           `);
           infoWindowRef.current.open(mapInstanceRef.current, marker);
