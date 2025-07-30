@@ -49,14 +49,14 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
     
     return {
       url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-        <svg width="24" height="36" viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 0C5.373 0 0 5.373 0 12c0 9 12 24 12 24s12-15 12-24c0-6.627-5.373-12-12-12z" 
+        <svg width="30" height="42" viewBox="0 0 30 42" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 3C8.373 3 3 8.373 3 15c0 9 12 24 12 24s12-15 12-24c0-6.627-5.373-12-12-12z" 
                 fill="${color}" ${borderStyle}/>
-          <circle cx="12" cy="12" r="6" fill="#FFFFFF"/>
+          <circle cx="15" cy="15" r="6" fill="#FFFFFF"/>
         </svg>
       `)}`,
-      scaledSize: new window.google.maps.Size(24, 36),
-      anchor: new window.google.maps.Point(12, 36)
+      scaledSize: new window.google.maps.Size(30, 42),
+      anchor: new window.google.maps.Point(15, 42)
     };
   };
 
@@ -137,36 +137,39 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
           infoWindowRef.current.setContent(`
             <div style="
               font-family: 'Roboto', sans-serif;
-              background: #FFFFFF;
+              background: white;
               border-radius: 8px;
               box-shadow: 0 2px 10px rgba(62, 32, 152, 0.3);
-              padding: 16px;
-              min-width: 200px;
-              max-width: 300px;
+              padding: 12px;
+              min-width: 180px;
+              max-width: 280px;
+              border: 1px solid #e0e0e0;
             ">
               <div style="
                 font-size: 16px;
                 font-weight: 500;
-                color: #202124;
+                color: #3c4043;
                 margin-bottom: 4px;
-                line-height: 1.2;
+                line-height: 1.3;
               ">
                 ${result.name}
               </div>
               <div style="
                 font-size: 14px;
-                color: #5f6368;
+                color: #70757a;
                 margin-bottom: 8px;
                 line-height: 1.3;
               ">
-                Address information would go here
+                ${result.type.charAt(0).toUpperCase() + result.type.slice(1).replace('_', ' ')}
               </div>
-              <a href="#" style="
-                font-size: 14px;
-                color: #1a73e8;
-                text-decoration: none;
-                font-weight: 500;
-              ">
+              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(result.name)}&query_place_id=${result.id}" 
+                 target="_blank" 
+                 style="
+                   font-size: 14px;
+                   color: #1a73e8;
+                   text-decoration: none;
+                   font-weight: 400;
+                 ">
                 View on Google Maps
               </a>
             </div>

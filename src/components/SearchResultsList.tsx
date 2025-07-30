@@ -38,7 +38,7 @@ export const SearchResultsList: React.FC<SearchResultsListProps> = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
       <LocationSuggestionBanner />
       {results.map((result) => (
         <div key={result.id} className="bg-background border rounded-lg overflow-hidden shadow-sm">

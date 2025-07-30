@@ -11,7 +11,7 @@ export const LocationSuggestionBanner: React.FC = () => {
 
   return (
     <>
-      <div className="fixed bottom-4 left-4 z-10 w-full max-w-[30%] md:max-w-[30%] sm:max-w-[90%] sm:left-1/2 sm:transform sm:-translate-x-1/2 sm:text-center">
+      <div className="absolute bottom-4 left-4 z-10 w-full max-w-[30%] md:max-w-[30%] sm:max-w-[90%]">
         <div 
           className="relative p-3"
           style={{
