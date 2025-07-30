@@ -5,6 +5,7 @@ interface MapResult {
   name: string;
   type: 'cafe' | 'library' | 'hotel' | 'food_court' | string;
   location: { lat: number; lng: number };
+  address?: string;
 }
 
 interface SearchResultsMapProps {
@@ -17,6 +18,7 @@ interface SearchResultsMapProps {
 declare global {
   interface Window {
     google: any;
+    googleMapsLoaded?: boolean;
   }
 }
 
@@ -62,26 +64,56 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
 
   // Initialize Google Map
   useEffect(() => {
-    if (!mapRef.current || !window.google) return;
+    const initializeMap = () => {
+      if (!mapRef.current || !window.google || !window.google.maps) {
+        console.log('Google Maps not ready yet', { 
+          mapRef: !!mapRef.current, 
+          google: !!window.google, 
+          maps: !!window.google?.maps 
+        });
+        return;
+      }
 
-    const map = new window.google.maps.Map(mapRef.current, {
-      center: center,
-      zoom: 13,
-      mapTypeId: 'roadmap',
-      styles: [], // Default Google Maps styling
-      zoomControl: true,
-      streetViewControl: false,
-      fullscreenControl: false,
-      mapTypeControl: false
-    });
+      console.log('Initializing Google Maps...');
 
-    mapInstanceRef.current = map;
+      const map = new window.google.maps.Map(mapRef.current, {
+        center: center,
+        zoom: 13,
+        mapTypeId: 'roadmap',
+        styles: [], // Default Google Maps styling
+        zoomControl: true,
+        streetViewControl: false,
+        fullscreenControl: false,
+        mapTypeControl: false
+      });
 
-    // Create info window for showing place names
-    infoWindowRef.current = new window.google.maps.InfoWindow({
-      pixelOffset: new window.google.maps.Size(0, -40),
-      disableAutoPan: false
-    });
+      mapInstanceRef.current = map;
+      console.log('Map initialized successfully');
+
+      // Create info window for showing place names
+      infoWindowRef.current = new window.google.maps.InfoWindow({
+        pixelOffset: new window.google.maps.Size(0, -40),
+        disableAutoPan: false
+      });
+      console.log('InfoWindow created successfully');
+    };
+
+    // Check if Google Maps is already loaded
+    if (window.googleMapsLoaded) {
+      initializeMap();
+    } else {
+      // Wait for Google Maps to load
+      const handleGoogleMapsLoad = () => {
+        console.log('Google Maps loaded event received');
+        initializeMap();
+      };
+
+      window.addEventListener('google-maps-loaded', handleGoogleMapsLoad);
+      
+      return () => {
+        window.removeEventListener('google-maps-loaded', handleGoogleMapsLoad);
+      };
+    }
 
     return () => {
       if (mapInstanceRef.current) {
@@ -118,28 +150,23 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
 
       // Add click listener
       marker.addListener('click', () => {
+        console.log('Marker clicked:', result.name, result.id);
+        console.log('InfoWindow available:', !!infoWindowRef.current);
+        console.log('Map instance available:', !!mapInstanceRef.current);
+        
         // Update selected marker
         setSelectedMarkerId(result.id);
-        
-        // Get text color based on marker type
-        const getTextColor = (type: string) => {
-          switch (type) {
-            case 'cafe': return '#4285F4';
-            case 'library': return '#34A853';
-            case 'hotel': return '#EA4335';
-            case 'food_court': return '#FF9800';
-            default: return '#9C27B0';
-          }
-        };
 
         // Show Google Maps style popup with location info
-        if (infoWindowRef.current) {
-          infoWindowRef.current.setContent(`
+        if (infoWindowRef.current && mapInstanceRef.current) {
+          console.log('Creating InfoWindow content for:', result.name);
+          
+          const content = `
             <div style="
               font-family: 'Roboto', sans-serif;
               background: white;
               border-radius: 8px;
-              box-shadow: 0 2px 10px rgba(62, 32, 152, 0.3);
+              box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
               padding: 12px;
               min-width: 180px;
               max-width: 280px;
@@ -162,7 +189,7 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
               ">
                 ${result.type.charAt(0).toUpperCase() + result.type.slice(1).replace('_', ' ')}
               </div>
-              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(result.name)}&query_place_id=${result.id}" 
+              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(result.name)}" 
                  target="_blank" 
                  style="
                    font-size: 14px;
@@ -173,8 +200,20 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
                 View on Google Maps
               </a>
             </div>
-          `);
+          `;
+          
+          console.log('Setting InfoWindow content...');
+          infoWindowRef.current.setContent(content);
+          
+          console.log('Opening InfoWindow...');
           infoWindowRef.current.open(mapInstanceRef.current, marker);
+          
+          console.log('InfoWindow should now be visible');
+        } else {
+          console.error('InfoWindow or Map instance not available', {
+            infoWindow: !!infoWindowRef.current,
+            map: !!mapInstanceRef.current
+          });
         }
       });
 
