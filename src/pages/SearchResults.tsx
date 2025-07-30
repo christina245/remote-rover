@@ -954,22 +954,17 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       let coverPhoto = `https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=200&fit=crop`; // Default: people with laptops
       
       if (photos.length > 0) {
-        // Get photo using proper API v1 media endpoint with headers
+        // Construct photo URL directly using the correct Google Places Photo API format
         try {
           const photoName = photos.length > 1 ? photos[1].name : photos[0].name;
-          const photoResponse = await fetch(
-            `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=400`,
-            {
-              headers: {
-                'X-Goog-Api-Key': apiKeys.places
-              }
-            }
-          );
-          if (photoResponse.ok) {
-            coverPhoto = photoResponse.url;
-          }
+          coverPhoto = `https://places.googleapis.com/v1/${photoName}/media?key=${apiKeys.places}&maxWidthPx=400`;
+          console.log(`📸 Photo data for ${details.displayName?.text || 'Unknown'}:`, {
+            photoCount: photos.length,
+            photoName: photoName,
+            constructedURL: coverPhoto
+          });
         } catch (error) {
-          console.error('Error loading photo:', error);
+          console.error('Error constructing photo URL:', error);
         }
       } else {
         // Use different defaults based on place type
