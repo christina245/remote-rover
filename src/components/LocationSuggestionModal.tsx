@@ -67,7 +67,7 @@ export const LocationSuggestionModal: React.FC<LocationSuggestionModalProps> = (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[80%] max-w-md mx-auto">
         <DialogHeader className="relative">
-          <DialogTitle className="text-lg font-semibold text-center pr-8">
+          <DialogTitle className="text-lg font-semibold text-center">
             Suggest a Location
           </DialogTitle>
           <Button
@@ -75,6 +75,7 @@ export const LocationSuggestionModal: React.FC<LocationSuggestionModalProps> = (
             size="icon"
             onClick={onClose}
             className="absolute right-0 top-0 h-6 w-6"
+            style={{ color: '#3E2098' }}
           >
             <X className="h-4 w-4" />
           </Button>
@@ -88,7 +89,7 @@ export const LocationSuggestionModal: React.FC<LocationSuggestionModalProps> = (
           
           <div className="space-y-3">
             <Label className="text-sm font-medium">
-              But first, confirm this location is: *
+              But first, confirm this location is: <span style={{ color: '#FF1418' }}>*</span>
             </Label>
             
             <div className="space-y-2">
@@ -129,7 +130,7 @@ export const LocationSuggestionModal: React.FC<LocationSuggestionModalProps> = (
 
           <div className="space-y-2">
             <Label htmlFor="googleMapsUrl" className="text-sm font-medium">
-              Google Maps URL: *
+              Google Maps URL: <span style={{ color: '#FF1418' }}>*</span>
             </Label>
             <Input
               id="googleMapsUrl"
@@ -142,7 +143,7 @@ export const LocationSuggestionModal: React.FC<LocationSuggestionModalProps> = (
 
           <div className="space-y-2">
             <Label htmlFor="email" className="text-sm font-medium">
-              Your email: *
+              Your email: <span style={{ color: '#FF1418' }}>*</span>
             </Label>
             <Input
               id="email"
@@ -167,11 +168,6 @@ export const LocationSuggestionModal: React.FC<LocationSuggestionModalProps> = (
             />
           </div>
 
-          {!isFormValid && (
-            <p className="text-sm text-red-500 text-center">
-              All fields required.
-            </p>
-          )}
 
           <Button
             onClick={handleSubmit}
