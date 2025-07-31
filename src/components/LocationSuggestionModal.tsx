@@ -66,19 +66,10 @@ export const LocationSuggestionModal: React.FC<LocationSuggestionModalProps> = (
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[80%] max-w-md mx-auto">
-        <DialogHeader className="relative">
+        <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-center">
             Suggest a Location
           </DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="absolute right-0 top-0 h-6 w-6"
-            style={{ color: '#3E2098' }}
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
         
         <div className="space-y-4 pt-4">

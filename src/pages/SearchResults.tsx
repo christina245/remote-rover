@@ -1302,8 +1302,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
               </Select>
             </div>
             <Select value={sortBy} onValueChange={(value: 'distance' | 'rating') => setSortBy(value)}>
-              <SelectTrigger className="w-32 px-2">
-                <ArrowUpDown className="w-4 h-4 mr-1" />
+              <SelectTrigger className="w-28 px-2">
+                <ArrowUpDown className="w-4 h-4 mr-0.5" />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-background border shadow-md z-50">

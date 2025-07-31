@@ -51,14 +51,14 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
     
     return {
       url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-        <svg width="30" height="42" viewBox="0 0 30 42" xmlns="http://www.w3.org/2000/svg">
-          <path d="M15 3C8.373 3 3 8.373 3 15c0 9 12 24 12 24s12-15 12-24c0-6.627-5.373-12-12-12z" 
+        <svg width="36" height="48" viewBox="0 0 36 48" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 3C10.8 3 5 8.8 5 16c0 10.5 13 29 13 29s13-18.5 13-29c0-7.2-5.8-13-13-13z" 
                 fill="${color}" ${borderStyle}/>
-          <circle cx="15" cy="15" r="6" fill="#FFFFFF"/>
+          <circle cx="18" cy="16" r="7" fill="#FFFFFF"/>
         </svg>
       `)}`,
-      scaledSize: new window.google.maps.Size(30, 42),
-      anchor: new window.google.maps.Point(15, 42)
+      scaledSize: new window.google.maps.Size(36, 48),
+      anchor: new window.google.maps.Point(18, 48)
     };
   };
 
@@ -90,22 +90,26 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
       mapInstanceRef.current = map;
       console.log('Map initialized successfully');
 
-      // Create info window for showing place names
-      infoWindowRef.current = new window.google.maps.InfoWindow({
-        pixelOffset: new window.google.maps.Size(0, -40),
-        disableAutoPan: false
-      });
-      console.log('InfoWindow created successfully');
+      // Create info window for showing place names - ensure it's properly initialized
+      try {
+        infoWindowRef.current = new window.google.maps.InfoWindow();
+        console.log('InfoWindow created successfully');
+      } catch (error) {
+        console.error('Failed to create InfoWindow:', error);
+      }
     };
 
-    // Check if Google Maps is already loaded
-    if (window.googleMapsLoaded) {
-      initializeMap();
+    // Wait for Google Maps to be fully loaded
+    if (window.googleMapsLoaded && window.google && window.google.maps && window.google.maps.InfoWindow) {
+      console.log('Google Maps already loaded, initializing...');
+      setTimeout(initializeMap, 100);
     } else {
+      console.log('Waiting for Google Maps to load...');
       // Wait for Google Maps to load
       const handleGoogleMapsLoad = () => {
         console.log('Google Maps loaded event received');
-        initializeMap();
+        // Add a delay to ensure everything is ready
+        setTimeout(initializeMap, 200);
       };
 
       window.addEventListener('google-maps-loaded', handleGoogleMapsLoad);
@@ -150,67 +154,61 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
 
       // Add click listener
       marker.addListener('click', () => {
-        console.log('Marker clicked:', result.name, result.id);
-        console.log('InfoWindow available:', !!infoWindowRef.current);
-        console.log('Map instance available:', !!mapInstanceRef.current);
+        console.log('🔥 Marker clicked:', result.name, result.id);
+        console.log('🔥 InfoWindow available:', !!infoWindowRef.current);
+        console.log('🔥 Map instance available:', !!mapInstanceRef.current);
         
         // Update selected marker
         setSelectedMarkerId(result.id);
 
         // Show Google Maps style popup with location info
         if (infoWindowRef.current && mapInstanceRef.current) {
-          console.log('Creating InfoWindow content for:', result.name);
+          console.log('🔥 Creating InfoWindow content for:', result.name);
           
-          const content = `
-            <div style="
-              font-family: 'Roboto', sans-serif;
-              background: white;
-              border-radius: 8px;
-              box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-              padding: 12px;
-              min-width: 180px;
-              max-width: 280px;
-              border: 1px solid #e0e0e0;
-            ">
+          try {
+            const content = `
               <div style="
-                font-size: 16px;
-                font-weight: 500;
-                color: #3c4043;
-                margin-bottom: 4px;
-                line-height: 1.3;
-              ">
-                ${result.name}
-              </div>
-              <div style="
+                font-family: 'Roboto', sans-serif;
                 font-size: 14px;
-                color: #70757a;
-                margin-bottom: 8px;
-                line-height: 1.3;
+                line-height: 1.4;
+                color: #202124;
+                max-width: 200px;
               ">
-                ${result.type.charAt(0).toUpperCase() + result.type.slice(1).replace('_', ' ')}
+                <div style="
+                  font-weight: 500;
+                  margin-bottom: 2px;
+                ">
+                  ${result.name}
+                </div>
+                ${result.address ? `<div style="color: #5f6368; margin-bottom: 8px;">${result.address}</div>` : ''}
+                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(result.name + (result.address ? ' ' + result.address : ''))}" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   style="
+                     color: #1a73e8;
+                     text-decoration: none;
+                     font-size: 13px;
+                   ">
+                  View on Google Maps
+                </a>
               </div>
-              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(result.name)}" 
-                 target="_blank" 
-                 style="
-                   font-size: 14px;
-                   color: #1a73e8;
-                   text-decoration: none;
-                   font-weight: 400;
-                 ">
-                View on Google Maps
-              </a>
-            </div>
-          `;
-          
-          console.log('Setting InfoWindow content...');
-          infoWindowRef.current.setContent(content);
-          
-          console.log('Opening InfoWindow...');
-          infoWindowRef.current.open(mapInstanceRef.current, marker);
-          
-          console.log('InfoWindow should now be visible');
+            `;
+            
+            console.log('🔥 Setting InfoWindow content...');
+            infoWindowRef.current.setContent(content);
+            
+            console.log('🔥 Opening InfoWindow at position:', result.location);
+            infoWindowRef.current.open({
+              map: mapInstanceRef.current,
+              anchor: marker
+            });
+            
+            console.log('🔥 InfoWindow opened successfully');
+          } catch (error) {
+            console.error('🔥 Error creating/opening InfoWindow:', error);
+          }
         } else {
-          console.error('InfoWindow or Map instance not available', {
+          console.error('🔥 InfoWindow or Map instance not available', {
             infoWindow: !!infoWindowRef.current,
             map: !!mapInstanceRef.current
           });
