@@ -85,10 +85,9 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
 
   return (
     <>
-      <div className={cn("bg-background border-l shadow-lg overflow-y-auto", className)}>
+      <div className={cn("bg-background border-l shadow-lg overflow-y-auto w-[70%]", className)}>
         {/* Header */}
-        <div className="sticky top-0 bg-background border-b p-4 flex items-center justify-between z-10">
-          <h2 className="text-lg font-semibold truncate">{location.name}</h2>
+        <div className="sticky top-0 bg-background border-b p-4 flex items-end justify-end z-10">
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X size={20} />
           </Button>
@@ -147,7 +146,7 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
 
             <div className="flex items-center gap-2 text-sm">
               <Navigation size={14} />
-              <span>{location.distance}</span>
+              <span>{location.distance} miles</span>
               {location.isWheelchairAccessible && (
                 <>
                   <span className="text-muted-foreground">•</span>
@@ -158,9 +157,8 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
             </div>
 
             {location.address && (
-              <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <MapPin size={14} className="mt-0.5 flex-shrink-0" />
-                <span>{location.address}</span>
+              <div className="text-sm text-muted-foreground">
+                {location.address}
               </div>
             )}
           </div>
@@ -176,28 +174,30 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="space-y-2">
-            {(location.dataSource === 'google_maps' || location.hasGoogleMapsVersion) && (
-              <Button 
-                className="w-full bg-[#3E2098] hover:bg-[#3E2098]/90 text-white"
-                onClick={() => window.open(location.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.name)}`, '_blank')}
-              >
-                <img src="/lovable-uploads/dfe2b59f-1efb-4e0a-934f-a18e7e504cda.png" alt="Google Maps" className="w-5 h-5 mr-2" />
-                Open in Google Maps
-                <ExternalLink size={16} className="ml-2" />
-              </Button>
-            )}
-            
-            {location.dataSource === 'yelp' && !location.hasGoogleMapsVersion && (
-              <Button 
-                className="w-full bg-[#3E2098] hover:bg-[#3E2098]/90 text-white"
-                onClick={() => window.open(location.yelpUrl || '#', '_blank')}
-              >
-                <img src="/lovable-uploads/a66347bb-d90b-41b5-b279-92ad86632567.png" alt="Yelp" className="w-5 h-5 mr-2" />
-                Open in Yelp
-                <ExternalLink size={16} className="ml-2" />
-              </Button>
-            )}
+          <div className="flex justify-center">
+            <div className="w-1/2">
+              {(location.dataSource === 'google_maps' || location.hasGoogleMapsVersion) && (
+                <Button 
+                  className="w-full bg-[#3E2098] hover:bg-[#3E2098]/90 text-white"
+                  onClick={() => window.open(location.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.name)}`, '_blank')}
+                >
+                  <img src="/lovable-uploads/dfe2b59f-1efb-4e0a-934f-a18e7e504cda.png" alt="Google Maps" className="w-4 h-5 mr-2" />
+                  Open in Google Maps
+                  <ExternalLink size={16} className="ml-2" />
+                </Button>
+              )}
+              
+              {location.dataSource === 'yelp' && !location.hasGoogleMapsVersion && (
+                <Button 
+                  className="w-full bg-[#3E2098] hover:bg-[#3E2098]/90 text-white"
+                  onClick={() => window.open(location.yelpUrl || '#', '_blank')}
+                >
+                  <img src="/lovable-uploads/a66347bb-d90b-41b5-b279-92ad86632567.png" alt="Yelp" className="w-4 h-5 mr-2" />
+                  Open in Yelp
+                  <ExternalLink size={16} className="ml-2" />
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Photo Placeholders */}
