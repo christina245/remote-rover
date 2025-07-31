@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 import { SearchResultsMap } from '@/components/SearchResultsMap';
 import { SearchResultsList } from '@/components/SearchResultsList';
+import { LocationDetailsPanel } from '@/components/LocationDetailsPanel';
 
 const remoteRoverLogo = '/lovable-uploads/851bb79d-eedc-4b82-a6f1-733ef4e3ee10.png';
 
@@ -76,6 +77,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeMapFilters, setActiveMapFilters] = useState(new Set(['cafe', 'library', 'hotel', 'food_court', 'other']));
+  const [selectedLocation, setSelectedLocation] = useState<any | null>(null);
   
   const RESULTS_PER_PAGE = 10;
 
@@ -1302,8 +1304,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
               </Select>
             </div>
             <Select value={sortBy} onValueChange={(value: 'distance' | 'rating') => setSortBy(value)}>
-              <SelectTrigger className="w-28 px-2">
-                <ArrowUpDown className="w-4 h-4 mr-0.5" />
+              <SelectTrigger className="w-[100px] px-2 gap-1">
+                <ArrowUpDown className="w-4 h-4" />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-background border shadow-md z-50">
@@ -1317,7 +1319,12 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         {/* Results List - Scrollable */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-4">
-            <SearchResultsList results={paginatedResults} userLocation={userLocation} isLoading={isLoading} />
+            <SearchResultsList 
+              results={paginatedResults} 
+              userLocation={userLocation} 
+              isLoading={isLoading}
+              onLocationClick={setSelectedLocation}
+            />
             
             {/* Pagination Controls */}
             {totalPages > 1 && (
@@ -1351,8 +1358,26 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         </div>
       </div>
 
+      {/* Location Details Panel - Desktop */}
+      {selectedLocation && (
+        <div className="hidden md:block w-[45%] relative">
+          <LocationDetailsPanel
+            location={{
+              ...selectedLocation,
+              address: selectedLocation.formatted_address || `${selectedLocation.name} Location`,
+              dataSource: selectedLocation.source === 'yelp' ? 'yelp' : 'google_maps' as const,
+              hasGoogleMapsVersion: selectedLocation.source === 'yelp' ? Math.random() > 0.5 : true,
+              googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedLocation.name)}`,
+              yelpUrl: selectedLocation.url || `https://www.yelp.com/search?find_desc=${encodeURIComponent(selectedLocation.name)}`
+            }}
+            onClose={() => setSelectedLocation(null)}
+            className="h-full"
+          />
+        </div>
+      )}
+
       {/* Right Side - Map - Fixed */}
-      <div className="hidden md:flex md:flex-1 relative h-screen">
+      <div className={`hidden md:flex ${selectedLocation ? 'md:flex-1' : 'md:flex-1'} relative h-screen`}>
         <SearchResultsMap 
           apiKey={apiKeys.mapsStatic}
           center={mapCenter || userLocation || { lat: 37.7749, lng: -122.4194 }}
@@ -1416,6 +1441,26 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
           </div>
         </div>
       </div>
+
+      {/* Mobile Location Details Panel */}
+      {selectedLocation && (
+        <div className="md:hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg w-full h-[90vh] overflow-hidden">
+            <LocationDetailsPanel
+              location={{
+                ...selectedLocation,
+                address: selectedLocation.formatted_address || `${selectedLocation.name} Location`,
+                dataSource: selectedLocation.source === 'yelp' ? 'yelp' : 'google_maps' as const,
+                hasGoogleMapsVersion: selectedLocation.source === 'yelp' ? Math.random() > 0.5 : true,
+                googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedLocation.name)}`,
+                yelpUrl: selectedLocation.url || `https://www.yelp.com/search?find_desc=${encodeURIComponent(selectedLocation.name)}`
+              }}
+              onClose={() => setSelectedLocation(null)}
+              className="h-full"
+            />
+          </div>
+        </div>
+      )}
     </div>
     );
   };

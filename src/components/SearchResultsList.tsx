@@ -22,12 +22,14 @@ interface SearchResultsListProps {
   results: SearchResult[];
   userLocation: { lat: number; lng: number } | null;
   isLoading?: boolean;
+  onLocationClick?: (location: SearchResult) => void;
 }
 
 export const SearchResultsList: React.FC<SearchResultsListProps> = ({ 
   results, 
   userLocation,
-  isLoading = false
+  isLoading = false,
+  onLocationClick
 }) => {
   if (results.length === 0 && !isLoading) {
     return (
@@ -43,8 +45,11 @@ export const SearchResultsList: React.FC<SearchResultsListProps> = ({
       {results.map((result) => (
         <div key={result.id} className="bg-background border rounded-lg overflow-hidden shadow-sm">
           {/* Cover Photo */}
-          <div className="h-32 bg-gray-200 relative overflow-hidden">
-            <img 
+          <div 
+            className="h-32 bg-gray-200 relative overflow-hidden cursor-pointer"
+            onClick={() => onLocationClick?.(result)}
+          >
+            <img
               src={result.coverPhoto} 
               alt={result.name}
               className="w-full h-full object-cover"
@@ -75,7 +80,12 @@ export const SearchResultsList: React.FC<SearchResultsListProps> = ({
           <div className="p-4">
             <div className="flex items-start justify-between mb-2">
               <div>
-                <h3 className="font-semibold text-lg">{result.name}</h3>
+                <h3 
+                  className="font-semibold text-lg cursor-pointer hover:text-[#3E2098]"
+                  onClick={() => onLocationClick?.(result)}
+                >
+                  {result.name}
+                </h3>
                 <p className="text-sm text-muted-foreground capitalize">{result.type}</p>
               </div>
               <div className="flex items-center gap-1 text-sm">
