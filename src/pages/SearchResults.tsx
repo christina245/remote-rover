@@ -1360,7 +1360,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
 
       {/* Location Details Panel - Desktop */}
       {selectedLocation && (
-        <div className="hidden md:block w-[45%] relative">
+        <div className="hidden md:block w-[31.5%] relative">
           <LocationDetailsPanel
             location={{
               ...selectedLocation,
