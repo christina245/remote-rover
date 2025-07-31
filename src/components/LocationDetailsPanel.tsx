@@ -85,7 +85,7 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
 
   return (
     <>
-      <div className={cn("bg-background border-l shadow-lg overflow-y-auto w-[70%]", className)}>
+      <div className={cn("bg-background border-l shadow-lg overflow-y-auto w-full", className)}>
         {/* Header */}
         <div className="sticky top-0 bg-background border-b p-4 flex items-end justify-end z-10">
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -181,9 +181,8 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
                   className="w-full bg-[#3E2098] hover:bg-[#3E2098]/90 text-white"
                   onClick={() => window.open(location.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.name)}`, '_blank')}
                 >
-                  <img src="/lovable-uploads/dfe2b59f-1efb-4e0a-934f-a18e7e504cda.png" alt="Google Maps" className="w-4 h-5 mr-2" />
-                  Open in Google Maps
-                  <ExternalLink size={16} className="ml-2" />
+                  <img src="/lovable-uploads/dfe2b59f-1efb-4e0a-934f-a18e7e504cda.png" alt="Google Maps" className="w-3.2 h-5" />
+                  <span className="ml-2">Open in Google Maps</span>
                 </Button>
               )}
               
