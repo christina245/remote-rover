@@ -17,6 +17,9 @@ export default {
 				'2xl': '1400px'
 			}
 		},
+		screens: {
+			'tablet': '768px',
+		},
 		extend: {
 			fontFamily: {
 				'ibm-plex': ['IBM Plex Sans Devanagari', 'sans-serif'],

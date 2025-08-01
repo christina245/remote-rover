@@ -87,6 +87,13 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
     <>
       <div 
         className={cn("bg-background border-l shadow-lg overflow-y-auto w-full", className)}
+        style={{ 
+          scrollBehavior: 'smooth'
+        }}
+        onWheel={(e) => {
+          // Prevent the parent from scrolling when this panel is scrolled
+          e.stopPropagation();
+        }}
       >
         {/* Header */}
         <div className="sticky top-0 bg-background border-b p-4 flex items-end justify-end z-10">
@@ -122,7 +129,7 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
               </div>
               <div className="flex items-center gap-1">
                 <Star size={16} className="fill-yellow-400 text-yellow-400" />
-                <span className="font-medium">{location.rating}</span>
+                <span className="font-medium">{location.rating === 4 ? '4.0' : location.rating}</span>
                 <span className="text-muted-foreground">({location.reviewCount})</span>
               </div>
             </div>
@@ -170,7 +177,7 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
 
           {/* Action Buttons */}
           <div className="flex justify-center">
-            <div className="w-3/5 md:w-1/2">
+            <div className="w-1/2 md:w-1/2 min-w-[60%] md:min-w-0">
               {(location.dataSource === 'google_maps' || location.hasGoogleMapsVersion) && (
                 <Button 
                   className="w-full bg-[#3E2098] hover:bg-[#3E2098]/90 text-white"
@@ -182,7 +189,7 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
                   }}
                 >
                   <img src="/lovable-uploads/dfe2b59f-1efb-4e0a-934f-a18e7e504cda.png" alt="Google Maps" className="w-3.2 h-5" />
-                  <span className="ml-1.5">Open in Google Maps</span>
+                  <span className="ml-1">Open in Google Maps</span>
                 </Button>
               )}
               
