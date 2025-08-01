@@ -87,13 +87,6 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
     <>
       <div 
         className={cn("bg-background border-l shadow-lg overflow-y-auto w-full", className)}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.overflowY = 'auto';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.overflowY = 'auto';
-        }}
-        style={{ scrollBehavior: 'smooth' }}
       >
         {/* Header */}
         <div className="sticky top-0 bg-background border-b p-4 flex items-end justify-end z-10">
