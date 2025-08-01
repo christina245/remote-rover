@@ -1245,9 +1245,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   return (
     <div className="min-h-screen flex">
       {/* Left Sidebar - Results Panel */}
-      <div className={cn("w-full flex flex-col bg-background border-r h-screen", 
-        selectedLocation ? "md:w-[30%]" : "md:w-[35%]"
-      )}>
+      <div className="w-full md:w-[30%] flex flex-col bg-background border-r h-screen">
         {/* Search Bar - Fixed */}
         <div className="p-4 border-b flex-shrink-0">
           <div className="relative">
