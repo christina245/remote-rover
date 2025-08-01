@@ -1245,7 +1245,9 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
   return (
     <div className="min-h-screen flex">
       {/* Left Sidebar - Results Panel */}
-      <div className="w-full md:w-[35%] flex flex-col bg-background border-r h-screen">
+      <div className={cn("w-full flex flex-col bg-background border-r h-screen", 
+        selectedLocation ? "md:w-[30%]" : "md:w-[35%]"
+      )}>
         {/* Search Bar - Fixed */}
         <div className="p-4 border-b flex-shrink-0">
           <div className="relative">
@@ -1358,9 +1360,12 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         </div>
       </div>
 
+      {/* Gap between panels */}
+      {selectedLocation && <div className="hidden md:block w-[30px] tablet:w-[10px] flex-shrink-0" />}
+      
       {/* Location Details Panel - Desktop */}
       {selectedLocation && (
-        <div className="hidden md:block w-[31.5%] relative overflow-hidden mr-[30px] lg:mr-[30px] tablet:mr-[10px]">
+        <div className="hidden md:block w-[40%] relative overflow-hidden">
           <LocationDetailsPanel
             location={{
               ...selectedLocation,
