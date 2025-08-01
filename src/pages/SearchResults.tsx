@@ -1360,14 +1360,14 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
 
       {/* Location Details Panel - Desktop */}
       {selectedLocation && (
-        <div className="hidden md:block w-[31.5%] relative">
+        <div className="hidden md:block w-[31.5%] relative overflow-hidden">
           <LocationDetailsPanel
             location={{
               ...selectedLocation,
               address: selectedLocation.formatted_address || `${selectedLocation.name} Location`,
               dataSource: selectedLocation.source === 'yelp' ? 'yelp' : 'google_maps' as const,
               hasGoogleMapsVersion: selectedLocation.source === 'yelp' ? Math.random() > 0.5 : true,
-              googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedLocation.name)}`,
+              googleMapsUrl: `https://www.google.com/maps/place/${encodeURIComponent(selectedLocation.name + ' ' + (selectedLocation.formatted_address || selectedLocation.description || ''))}`,
               yelpUrl: selectedLocation.url || `https://www.yelp.com/search?find_desc=${encodeURIComponent(selectedLocation.name)}`
             }}
             onClose={() => setSelectedLocation(null)}

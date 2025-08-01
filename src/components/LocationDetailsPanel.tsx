@@ -147,13 +147,6 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
             <div className="flex items-center gap-2 text-sm">
               <Navigation size={14} />
               <span>{location.distance} miles</span>
-              {location.isWheelchairAccessible && (
-                <>
-                  <span className="text-muted-foreground">•</span>
-                  <Accessibility size={14} />
-                  <span>Wheelchair accessible</span>
-                </>
-              )}
             </div>
 
             {location.address && (
@@ -175,14 +168,14 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
 
           {/* Action Buttons */}
           <div className="flex justify-center">
-            <div className="w-1/2">
+            <div className="w-3/5 md:w-1/2">
               {(location.dataSource === 'google_maps' || location.hasGoogleMapsVersion) && (
                 <Button 
                   className="w-full bg-[#3E2098] hover:bg-[#3E2098]/90 text-white"
-                  onClick={() => window.open(location.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.name)}`, '_blank')}
+                  onClick={() => window.open(location.googleMapsUrl || `https://www.google.com/maps/place/${encodeURIComponent(location.name + ' ' + (location.address || ''))}`, '_blank')}
                 >
                   <img src="/lovable-uploads/dfe2b59f-1efb-4e0a-934f-a18e7e504cda.png" alt="Google Maps" className="w-3.2 h-5" />
-                  <span className="ml-2">Open in Google Maps</span>
+                  <span className="ml-1.5">Open in Google Maps</span>
                 </Button>
               )}
               
