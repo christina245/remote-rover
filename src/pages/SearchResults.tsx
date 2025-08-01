@@ -1367,7 +1367,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
               address: selectedLocation.formatted_address || `${selectedLocation.name} Location`,
               dataSource: selectedLocation.source === 'yelp' ? 'yelp' : 'google_maps' as const,
               hasGoogleMapsVersion: selectedLocation.source === 'yelp' ? Math.random() > 0.5 : true,
-              googleMapsUrl: `https://www.google.com/maps/place/${encodeURIComponent(selectedLocation.name + ' ' + (selectedLocation.formatted_address || selectedLocation.description || ''))}`,
+              googleMapsUrl: `https://www.google.com/maps/search/${encodeURIComponent(selectedLocation.name + ' ' + (selectedLocation.formatted_address || selectedLocation.description || ''))}`,
               yelpUrl: selectedLocation.url || `https://www.yelp.com/search?find_desc=${encodeURIComponent(selectedLocation.name)}`
             }}
             onClose={() => setSelectedLocation(null)}

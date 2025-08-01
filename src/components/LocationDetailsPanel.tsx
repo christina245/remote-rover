@@ -85,7 +85,16 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
 
   return (
     <>
-      <div className={cn("bg-background border-l shadow-lg overflow-y-auto w-full", className)}>
+      <div 
+        className={cn("bg-background border-l shadow-lg overflow-y-auto w-full", className)}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.overflowY = 'auto';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.overflowY = 'auto';
+        }}
+        style={{ scrollBehavior: 'smooth' }}
+      >
         {/* Header */}
         <div className="sticky top-0 bg-background border-b p-4 flex items-end justify-end z-10">
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -172,7 +181,12 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
               {(location.dataSource === 'google_maps' || location.hasGoogleMapsVersion) && (
                 <Button 
                   className="w-full bg-[#3E2098] hover:bg-[#3E2098]/90 text-white"
-                  onClick={() => window.open(location.googleMapsUrl || `https://www.google.com/maps/place/${encodeURIComponent(location.name + ' ' + (location.address || ''))}`, '_blank')}
+                  onClick={() => {
+                    const placeName = encodeURIComponent(location.name);
+                    const address = encodeURIComponent(location.address || '');
+                    const url = location.googleMapsUrl || `https://www.google.com/maps/search/${placeName}+${address}`;
+                    window.open(url, '_blank');
+                  }}
                 >
                   <img src="/lovable-uploads/dfe2b59f-1efb-4e0a-934f-a18e7e504cda.png" alt="Google Maps" className="w-3.2 h-5" />
                   <span className="ml-1.5">Open in Google Maps</span>
