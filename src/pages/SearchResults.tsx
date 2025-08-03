@@ -1364,13 +1364,17 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       {/* Location Details Panel - Desktop */}
       {selectedLocation && (
         <div 
-          className="hidden md:w-[37%] tablet:w-[40%] tablet:block relative overflow-hidden"
-          onMouseEnter={() => {
-            // Disable body scroll when hovering over location details panel
+          className="hidden md:w-[37%] tablet:w-[40%] tablet:block relative overflow-hidden focus:outline-none"
+          tabIndex={0}
+          onClick={(e) => {
+            e.currentTarget.focus();
+          }}
+          onFocus={() => {
+            // Disable body scroll when location details panel is focused
             document.body.style.overflow = 'hidden';
           }}
-          onMouseLeave={() => {
-            // Re-enable body scroll when leaving location details panel
+          onBlur={() => {
+            // Re-enable body scroll when location details panel loses focus
             document.body.style.overflow = 'auto';
           }}
           onWheel={(e) => {
