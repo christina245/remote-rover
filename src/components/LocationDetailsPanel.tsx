@@ -177,7 +177,7 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
 
           {/* Action Buttons */}
           <div className="flex justify-center">
-            <div className="w-1/2 md:w-1/2 min-w-[60%] md:min-w-0">
+            <div className="w-1/2 md:w-3/5 tablet:w-1/2 min-w-[60%] md:min-w-0">
               {(location.dataSource === 'google_maps' || location.hasGoogleMapsVersion) && (
                 <Button 
                   className="w-full bg-[#3E2098] hover:bg-[#3E2098]/90 text-white"

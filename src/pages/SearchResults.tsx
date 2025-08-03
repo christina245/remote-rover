@@ -1358,13 +1358,13 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         </div>
       </div>
 
-      {/* Gap between panels - only on tablet and desktop */}
-      {selectedLocation && <div className="hidden tablet:block w-[3%] flex-shrink-0" />}
+      {/* Gap between panels - only on tablet and desktop (transparent to show map) */}
+      {selectedLocation && <div className="hidden tablet:block w-[3%] flex-shrink-0 bg-transparent" />}
       
       {/* Location Details Panel - Desktop */}
       {selectedLocation && (
         <div 
-          className="hidden tablet:block w-[37%] relative overflow-hidden"
+          className="hidden md:w-[37%] tablet:w-[40%] tablet:block relative overflow-hidden"
           onMouseEnter={() => {
             // Disable body scroll when hovering over location details panel
             document.body.style.overflow = 'hidden';
@@ -1372,6 +1372,10 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
           onMouseLeave={() => {
             // Re-enable body scroll when leaving location details panel
             document.body.style.overflow = 'auto';
+          }}
+          onWheel={(e) => {
+            // Prevent parent scrolling when location details panel scrolls
+            e.stopPropagation();
           }}
         >
           <LocationDetailsPanel
@@ -1458,7 +1462,13 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       {/* Mobile Location Details Panel */}
       {selectedLocation && (
         <div className="md:hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-background rounded-lg w-full h-[90vh] overflow-hidden">
+          <div 
+            className="bg-background rounded-lg w-full h-[90vh] overflow-hidden"
+            onWheel={(e) => {
+              // Prevent parent scrolling when location details panel scrolls on mobile
+              e.stopPropagation();
+            }}
+          >
             <LocationDetailsPanel
               location={{
                 ...selectedLocation,
