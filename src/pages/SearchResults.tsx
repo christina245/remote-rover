@@ -1358,12 +1358,22 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         </div>
       </div>
 
-      {/* Gap between panels */}
-      {selectedLocation && <div className="hidden md:block w-[30px] tablet:w-[10px] flex-shrink-0" />}
+      {/* Gap between panels - only on tablet and desktop */}
+      {selectedLocation && <div className="hidden tablet:block w-[3%] flex-shrink-0" />}
       
       {/* Location Details Panel - Desktop */}
       {selectedLocation && (
-        <div className="hidden md:block w-[40%] relative overflow-hidden">
+        <div 
+          className="hidden tablet:block w-[37%] relative overflow-hidden"
+          onMouseEnter={() => {
+            // Disable body scroll when hovering over location details panel
+            document.body.style.overflow = 'hidden';
+          }}
+          onMouseLeave={() => {
+            // Re-enable body scroll when leaving location details panel
+            document.body.style.overflow = 'auto';
+          }}
+        >
           <LocationDetailsPanel
             location={{
               ...selectedLocation,
