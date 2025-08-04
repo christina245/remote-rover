@@ -86,12 +86,14 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
   return (
     <>
       <div 
-        className={cn("bg-background border-l shadow-lg overflow-y-auto w-full", className)}
+        className={cn("bg-background border-l shadow-lg overflow-y-auto w-full h-full", className)}
         style={{ 
-          scrollBehavior: 'smooth'
+          scrollBehavior: 'smooth',
+          overscrollBehavior: 'contain'
         }}
+        tabIndex={0}
+        onMouseEnter={(e) => e.currentTarget.focus()}
         onWheel={(e) => {
-          // Prevent the parent from scrolling when this panel is scrolled
           e.stopPropagation();
         }}
       >
