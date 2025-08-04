@@ -1398,7 +1398,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
       )}
 
       {/* Right Side - Map - Fixed */}
-      <div className={`hidden md:flex ${selectedLocation ? 'md:flex-1' : 'md:flex-1'} relative h-screen`}>
+      <div className={`hidden md:flex ${selectedLocation ? 'md:flex-1' : 'md:flex-1'} relative h-screen fixed-map`} style={{ position: 'fixed', right: 0, top: 0, bottom: 0, width: selectedLocation ? '35%' : '70%' }}>
         <SearchResultsMap 
           apiKey={apiKeys.mapsStatic}
           center={mapCenter || userLocation || { lat: 37.7749, lng: -122.4194 }}
