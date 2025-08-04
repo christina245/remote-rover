@@ -13,11 +13,8 @@ export const LocationSuggestionBanner: React.FC = () => {
     <>
       <div className="fixed bottom-4 z-50 left-4 w-[calc(30vw-2rem)] md:left-4 md:w-[calc(30vw-2rem)] mobile:left-1/2 mobile:w-[85%] mobile:transform mobile:-translate-x-1/2 mobile:max-w-none">
         <div 
-          className="relative p-3"
+          className="relative p-3 border border-gray-300 rounded-md bg-[#EDE8F5] shadow-md"
           style={{
-            borderRadius: '5px',
-            border: '1px solid #D9D9D9',
-            background: '#EDE8F5',
             boxShadow: '0 2px 6px 0 rgba(0, 0, 0, 0.25)'
           }}
         >

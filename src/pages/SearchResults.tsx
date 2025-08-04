@@ -1358,13 +1358,13 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         </div>
       </div>
 
-      {/* Location Details Panel - Desktop - Overlay with 3% gap */}
+      {/* Location Details Panel - Desktop - Overlay with 3% gap from search results */}
       {selectedLocation && (
         <div 
           className="hidden md:block absolute top-0 bottom-0 z-10"
           style={{ 
-            right: '3%', 
-            width: '30%',
+            left: '33%',  // Start after search results (30%) + 3% gap
+            width: '37%', // Fill space until map edge at 70%
             position: 'fixed'
           }}
           tabIndex={0}
