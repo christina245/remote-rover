@@ -1358,13 +1358,15 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         </div>
       </div>
 
-      {/* Gap between panels - only on tablet and desktop (transparent to show map) */}
-      {selectedLocation && <div className="hidden tablet:block w-[3%] flex-shrink-0 bg-transparent" />}
-      
-      {/* Location Details Panel - Desktop */}
+      {/* Location Details Panel - Desktop - Overlay with 3% gap */}
       {selectedLocation && (
         <div 
-          className="hidden md:w-[37%] tablet:w-[40%] tablet:block relative overflow-hidden focus:outline-none"
+          className="hidden md:block absolute top-0 bottom-0 z-10"
+          style={{ 
+            right: '3%', 
+            width: '30%',
+            position: 'fixed'
+          }}
           tabIndex={0}
           onClick={(e) => {
             e.currentTarget.focus();
@@ -1397,13 +1399,14 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         </div>
       )}
 
-      {/* Right Side - Map - Fixed */}
-      <div className={`hidden md:flex ${selectedLocation ? 'md:flex-1' : 'md:flex-1'} relative h-screen fixed-map`} style={{ position: 'fixed', right: 0, top: 0, bottom: 0, width: selectedLocation ? '35%' : '70%' }}>
+      {/* Right Side - Map - Fixed at consistent width */}
+      <div className="hidden md:flex relative h-screen" style={{ position: 'fixed', right: 0, top: 0, bottom: 0, width: '70%' }}>
         <SearchResultsMap 
           apiKey={apiKeys.mapsStatic}
           center={mapCenter || userLocation || { lat: 37.7749, lng: -122.4194 }}
           results={filteredMapResults}
           activeFilters={activeMapFilters}
+          selectedMarkerId={selectedLocation?.id || null}
         />
         
         {/* Map Filter Buttons */}

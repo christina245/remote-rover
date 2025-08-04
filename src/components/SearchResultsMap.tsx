@@ -13,6 +13,7 @@ interface SearchResultsMapProps {
   center: { lat: number; lng: number };
   results: MapResult[];
   activeFilters?: Set<string>;
+  selectedMarkerId?: string | null;
 }
 
 declare global {
@@ -26,13 +27,13 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
   apiKey, 
   center, 
   results,
-  activeFilters = new Set(['cafe', 'library', 'hotel', 'food_court', 'other'])
+  activeFilters = new Set(['cafe', 'library', 'hotel', 'food_court', 'other']),
+  selectedMarkerId
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const infoWindowRef = useRef<any>(null);
-  const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
 
   // Custom marker icons for different place types
   const getMarkerIcon = (type: string, isSelected: boolean = false) => {
@@ -158,8 +159,7 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
         console.log('🔥 InfoWindow available:', !!infoWindowRef.current);
         console.log('🔥 Map instance available:', !!mapInstanceRef.current);
         
-        // Update selected marker
-        setSelectedMarkerId(result.id);
+        // Marker click handled - highlighting managed by parent component
 
         // Show Google Maps style popup with location info
         if (infoWindowRef.current && mapInstanceRef.current) {
@@ -228,17 +228,50 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
     }
   }, [results, activeFilters, selectedMarkerId]);
 
-  // Update selected marker icon when selection changes
+  // Update selected marker icon when selection changes and auto-pan to selected marker
   useEffect(() => {
+    if (!mapInstanceRef.current) return;
+
+    let selectedMarker: any = null;
+    
     markersRef.current.forEach((marker, index) => {
       const result = results.filter(r => 
         activeFilters.has(r.type) || activeFilters.has('other')
       )[index];
       
       if (result) {
-        marker.setIcon(getMarkerIcon(result.type, selectedMarkerId === result.id));
+        const isSelected = selectedMarkerId === result.id;
+        marker.setIcon(getMarkerIcon(result.type, isSelected));
+        
+        if (isSelected) {
+          selectedMarker = marker;
+        }
       }
     });
+
+    // Auto-pan to selected marker, ensuring it's visible in the left portion of the map
+    // (not hidden under the location details panel)
+    if (selectedMarker && selectedMarkerId) {
+      const position = selectedMarker.getPosition();
+      if (position) {
+        // Pan the map so the selected marker is visible in the left 67% of the map
+        // (since 30% is covered by location details + 3% gap = 33% from right)
+        const bounds = mapInstanceRef.current.getBounds();
+        if (bounds) {
+          const ne = bounds.getNorthEast();
+          const sw = bounds.getSouthWest();
+          
+          // Calculate the visible area (left 67% of the map)
+          const visibleLngRange = (ne.lng() - sw.lng()) * 0.67;
+          const targetLng = sw.lng() + visibleLngRange * 0.5; // Center of visible area
+          
+          mapInstanceRef.current.panTo({
+            lat: position.lat(),
+            lng: targetLng
+          });
+        }
+      }
+    }
   }, [selectedMarkerId, results, activeFilters]);
 
   return (
