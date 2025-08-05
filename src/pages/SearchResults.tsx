@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { MapPin, Wifi, Zap, Dog, Volume2, CupSoda, Pizza, ClockAlert, Bus, Star, Navigation, Accessibility, ArrowUpDown, Coffee, BookOpen, Hotel, UtensilsCrossed, MapPin as OtherIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MapPin, Wifi, Zap, Dog, Volume2, CupSoda, Pizza, ClockAlert, Bus, Star, Navigation, Accessibility, ArrowUpDown, Coffee, BookOpen, Hotel, UtensilsCrossed, MapPin as OtherIcon, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -1417,53 +1417,52 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
           {mapFilterButtons.map((button) => {
             const IconComponent = button.icon;
             const isActive = activeMapFilters.has(button.id);
+            
+            // Color mapping to match map markers
+            const getChipColor = (id: string) => {
+              switch (id) {
+                case 'cafe': return '#4285F4'; // Blue
+                case 'library': return '#34A853'; // Green
+                case 'hotel': return '#EA4335'; // Red
+                case 'food_court': return '#FF9800'; // Orange
+                case 'other': return '#9C27B0'; // Purple
+                default: return '#3E2098';
+              }
+            };
+            
             return (
               <Button
                 key={button.id}
                 variant="outline"
                 size="sm"
                 onClick={() => toggleMapFilter(button.id)}
-                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors border-none ${
                   isActive 
-                    ? 'text-white border-transparent' 
-                    : 'text-black border-none'
+                    ? (button.id === 'other' ? 'text-black' : 'text-white')
+                    : 'text-black'
                 }`}
                 style={{ 
-                  backgroundColor: isActive ? '#3E2098' : '#EDE8F5'
+                  backgroundColor: isActive ? getChipColor(button.id) : '#EDE8F5'
                 }}
               >
                 <IconComponent size={14} />
                 {button.label}
+                {isActive && (
+                  <div 
+                    className="ml-1 rounded-full p-0.5 hover:bg-black/20 transition-colors cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleMapFilter(button.id);
+                    }}
+                  >
+                    <X size={10} />
+                  </div>
+                )}
               </Button>
             );
           })}
         </div>
 
-        {/* Map Legend */}
-        <div className="absolute top-4 right-4 bg-background/95 backdrop-blur-sm rounded-lg p-3 shadow-lg border">
-          <div className="space-y-1 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-              <span>Cafes</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <span>Libraries</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-              <span>Hotels</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-              <span>Food Courts</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#EDE8F5' }}></div>
-              <span>Other</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Mobile Location Details Panel */}
