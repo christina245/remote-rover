@@ -1287,12 +1287,13 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
         {/* Controls - Fixed */}
         <div className="p-4 border-b flex-shrink-0">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-1 text-sm text-foreground flex-1">
-              <span>
-                {isLoading ? 'Searching...' : `Found ${filteredResults.length} locations within`}
+            <div className="flex items-center gap-1 text-sm text-foreground flex-1 md:flex-row mobile:flex-row">
+              <span className="md:inline mobile:inline">
+                {isLoading ? 'Searching...' : `Found ${filteredResults.length} locations`}
               </span>
+              <span className="md:inline mobile:inline">within</span>
               <Select value={radiusMiles.toString()} onValueChange={(value) => setRadiusMiles(parseInt(value))}>
-                <SelectTrigger className="w-16 h-6 px-1 text-sm font-semibold border-0 shadow-none" style={{ color: '#3E2098' }}>
+                <SelectTrigger className="w-16 h-6 px-1 text-sm font-semibold shadow-none" style={{ color: '#3E2098', border: 'none' }}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-background border shadow-md z-50">
@@ -1438,7 +1439,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ apiKeys }) => {
                 onClick={() => toggleMapFilter(button.id)}
                 className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors border-none ${
                   isActive 
-                    ? (button.id === 'other' ? 'text-black' : 'text-white')
+                    ? 'text-white'
                     : 'text-black'
                 }`}
                 style={{ 

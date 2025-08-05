@@ -116,14 +116,14 @@ export const SearchResultsList: React.FC<SearchResultsListProps> = ({
                       </span>
                     </>
                   )}
-                  {!result.isOpen && (
-                    <>
-                      <span className="text-muted-foreground">•</span>
-                      <span className="text-muted-foreground">
-                        Closes at {result.closingTime}
-                      </span>
-                    </>
-                  )}
+            {!result.isOpen && (
+              <>
+                <span className="text-muted-foreground">•</span>
+                <span className="text-muted-foreground">
+                  Closed at {result.closingTime}
+                </span>
+              </>
+            )}
                 </>
               )}
             </div>

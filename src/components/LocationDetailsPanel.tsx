@@ -149,7 +149,7 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
                   </span>
                   <span className="text-muted-foreground">•</span>
                   <span className="text-muted-foreground">
-                    Closes at {location.closingTime}
+                    {location.isOpen ? 'Closes' : 'Closed'} at {location.closingTime}
                   </span>
                 </>
               )}
@@ -178,8 +178,8 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-center">
-            <div className="w-1/2 md:w-3/5 tablet:w-1/2 min-w-[60%] md:min-w-0">
+          <div className="flex flex-col items-center space-y-5">
+            <div className="w-3/5 max-w-[60%] md:max-w-[40%]">
               {(location.dataSource === 'google_maps' || location.hasGoogleMapsVersion) && (
                 <Button 
                   className="w-full bg-[#3E2098] hover:bg-[#3E2098]/90 text-white"
@@ -205,6 +205,16 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
                   <ExternalLink size={16} className="ml-2" />
                 </Button>
               )}
+            </div>
+            
+            {/* Send Feedback Link */}
+            <div className="text-center">
+              <button 
+                onClick={() => setFeedbackModalOpen(true)}
+                className="text-[#3E2098] hover:underline font-medium"
+              >
+                Send feedback
+              </button>
             </div>
           </div>
 
@@ -246,15 +256,6 @@ export const LocationDetailsPanel: React.FC<LocationDetailsPanelProps> = ({
             </div>
           )}
 
-          {/* Send Feedback Link */}
-          <div className="pt-4 border-t">
-            <button 
-              onClick={() => setFeedbackModalOpen(true)}
-              className="text-[#3E2098] hover:underline font-medium"
-            >
-              Send feedback
-            </button>
-          </div>
         </div>
       </div>
 
