@@ -31,6 +31,21 @@ export const SearchResultsList: React.FC<SearchResultsListProps> = ({
   isLoading = false,
   onLocationClick
 }) => {
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <img 
+          src="/lovable-uploads/7a935fc6-1951-4486-969a-c2ca6e1aec08.png" 
+          alt="Loading..." 
+          className="w-full max-w-[50%] h-auto animate-pulse mb-4"
+        />
+        <div className="text-center text-muted-foreground">
+          Pulling up a list of your next workspaces...
+        </div>
+      </div>
+    );
+  }
+
   if (results.length === 0 && !isLoading) {
     return (
       <div className="text-center py-8 text-muted-foreground">
