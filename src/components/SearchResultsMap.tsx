@@ -34,6 +34,7 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const infoWindowRef = useRef<any>(null);
+  const resultsSignatureRef = useRef<string>('');
 
   // Custom marker icons for different place types
   const getMarkerIcon = (type: string, isSelected: boolean = false) => {
@@ -135,6 +136,10 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
+    // Determine if results array actually changed (not just filter toggles)
+    const currentResultsSignature = results.map(r => r.id).join('|');
+    const resultsChanged = currentResultsSignature !== resultsSignatureRef.current;
+
     // Clear existing markers
     markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
@@ -218,14 +223,15 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
       markersRef.current.push(marker);
     });
 
-    // Fit bounds to show all markers
-    if (filteredResults.length > 0) {
+    // Fit bounds only when the underlying results changed (not when toggling filter chips)
+    if (filteredResults.length > 0 && resultsChanged) {
       const bounds = new window.google.maps.LatLngBounds();
-      filteredResults.forEach(result => {
-        bounds.extend(result.location);
-      });
+      filteredResults.forEach(result => bounds.extend(result.location));
       mapInstanceRef.current.fitBounds(bounds);
     }
+
+    // Update signature after processing
+    resultsSignatureRef.current = currentResultsSignature;
   }, [results, activeFilters, selectedMarkerId]);
 
   // Update selected marker icon when selection changes and auto-pan to selected marker
